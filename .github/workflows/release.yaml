@@ -1,0 +1,39 @@
+name: Pack and release plugin
+
+# 打 tag（如 v1.0.0，需与 manifest.json 的 version 对应）时自动构建并把
+# .flexplugin 附到 Release 资产里，供用户/FlexGate 一键导入。
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install FlexCLI
+        run: npm install -g @eniac/flexcli
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Pack plugin
+        run: npm run plugin:pack
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: com.h0ypothesis.bilibili.flexplugin
