@@ -122,7 +122,7 @@ function deriveTimeline() {
 // 轮询 CDP → 更新按键
 // ============================================================================
 
-let lastVideoKey, lastPlayState, lastSocialKey, lastExtrasKey, lastTimelineKey;
+let lastVideoKey, lastPlayState, lastSocialKey, lastExtrasKey;
 
 function applyState() {
     currentState.video = deriveVideo();
@@ -138,9 +138,7 @@ function applyState() {
     if (sKey !== lastSocialKey) { lastSocialKey = sKey; updateSocialKeys(); }
     const eKey = JSON.stringify(currentState.extras);
     if (eKey !== lastExtrasKey) { lastExtrasKey = eKey; updateExtrasKeys(); }
-    // 进度刷新：仅在进度真正变化时才发（约 2Hz）。空闲/暂停时进度不变 → 不再每轮猛刷设备。
-    const tlKey = `${Math.round((currentState.timeline.currentTime || 0) / 500)}:${currentState.timeline.totalTime || 0}`;
-    if (tlKey !== lastTimelineKey) { lastTimelineKey = tlKey; updateTimelineKeys(); }
+    updateTimelineKeys();                                                            // 每次轮询刷进度
 }
 
 async function onSnapshot(s) {
@@ -191,7 +189,7 @@ async function pollLoop() {
 
 function launchApp() {
     try {
-        const p = spawn('open', ['-a', APP_NAME, '--args', `--remote-debugging-port=${CDP_PORT}`], { stdio: 'ignore', detached: true });
+        const p = spawn('open', ['-a', APP_NAME, '--args', `--remote-debugging-port=${CDP_PORT}`, '--remote-allow-origins=*'], { stdio: 'ignore', detached: true });
         p.on('error', (e) => logger.error('[Plugin] 启动哔哩哔哩失败: ' + e.message));
         p.unref();
     } catch (e) { logger.error('[Plugin] 启动哔哩哔哩异常: ' + e.message); }
@@ -466,12 +464,11 @@ plugin.on('ui.message', async (payload) => {
     }
 });
 
-// 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）。
-// 与实测可用的手动命令一致：优雅退出 → 等 2 秒 → 带端口启动。
-// 不用 pkill/轮询——在退出途中强杀会让新实例「跳两下又崩」。
+// 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）
 function restartBilibiliDebug() {
-    const app = APP_NAME;
-    const cmd = `osascript -e 'quit app "${app}"' >/dev/null 2>&1; sleep 2; open -a "${app}" --args --remote-debugging-port=${CDP_PORT}`;
+    const cmd = `osascript -e 'tell application "${APP_NAME}" to quit' >/dev/null 2>&1; sleep 1; ` +
+        `pkill -f "${APP_NAME}.app" >/dev/null 2>&1; sleep 1; ` +
+        `open -a "${APP_NAME}" --args --remote-debugging-port=${CDP_PORT} --remote-allow-origins='*'`;
     return new Promise((resolve) => {
         exec(cmd, (error) => {
             if (error) { logger.error(`[Plugin] 重启哔哩哔哩失败: ${error.message}`); resolve({ success: false, error: error.message }); }
