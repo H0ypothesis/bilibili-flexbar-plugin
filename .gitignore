@@ -1,0 +1,6 @@
+node_modules/
+com.eniac.bilibiliplugin.plugin/backend/
+com.eniac.bilibiliplugin.plugin/logs/
+*.flexplugin
+macos-bridge/bridge.log
+.DS_Store

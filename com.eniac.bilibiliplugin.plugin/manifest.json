@@ -1,0 +1,421 @@
+{
+    "name": "BilibiliPlugin",
+    "uuid": "com.eniac.bilibiliplugin",
+    "version": "1.0.0",
+    "author": "vibe",
+    "entry": "backend/plugin.cjs",
+    "description": "哔哩哔哩控制面板 - 通过 Electron 调试协议驱动 Mac 客户端播放器（进度拖拽/播放暂停/下一集）",
+    "repo": "",
+    "sdk": {
+        "version": "1.0.0"
+    },
+    "software": {
+        "minimumVersion": "1.0.0"
+    },
+    "os": [
+        {
+            "platform": "mac",
+            "minimumVersion": "11.0"
+        }
+    ],
+    "device": [
+        {
+            "name": "flexbar",
+            "version": "1.0.0"
+        }
+    ],
+    "configPage": "configPage",
+    "keyLibrary": {
+        "title": "$PluginName",
+        "style": {
+            "icon": "data:image/png;base64,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"
+        },
+        "children": [
+            {
+                "title": "$NowPlaying.Title",
+                "tip": "$NowPlaying.Tip",
+                "cid": "com.eniac.bilibiliplugin.nowplaying",
+                "config": {
+                    "keyType": "default",
+                    "clickable": false,
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-television-play",
+                    "width": 600,
+                    "flags": ["disable-bg", "disable-fg", "disable-icon-sel", "disable-layout-sel"]
+                },
+                "data": {
+                    "showTitle": true,
+                    "showUp": true,
+                    "showCover": true,
+                    "showProgress": true
+                }
+            },
+            {
+                "title": "$Progress.Title",
+                "tip": "$Progress.Tip",
+                "cid": "com.eniac.bilibiliplugin.progress",
+                "config": {
+                    "keyType": "slider",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-blank",
+                    "width": 1000,
+                    "slider": {
+                        "color": "#FB7299",
+                        "width": 960,
+                        "format": "%0.0f%%",
+                        "min": 0,
+                        "max": 100,
+                        "decimals": 0
+                    }
+                },
+                "data": {}
+            },
+            {
+                "title": "$PlayPause.Title",
+                "tip": "$PlayPause.Tip",
+                "cid": "com.eniac.bilibiliplugin.playpause",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-play",
+                    "width": 120,
+                    "multiStyle": [
+                        {
+                            "icon": "mdi mdi-play",
+                            "fgColor": "#FFFFFF"
+                        },
+                        {
+                            "icon": "mdi mdi-pause",
+                            "fgColor": "#FB7299"
+                        }
+                    ]
+                },
+                "data": {}
+            },
+            {
+                "title": "$Next.Title",
+                "tip": "$Next.Tip",
+                "cid": "com.eniac.bilibiliplugin.next",
+                "config": {
+                    "keyType": "default",
+                    "clickable": true,
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-skip-next",
+                    "width": 120
+                },
+                "data": {}
+            },
+            {
+                "title": "$Back15.Title",
+                "tip": "$Back15.Tip",
+                "cid": "com.eniac.bilibiliplugin.back",
+                "config": {
+                    "keyType": "default",
+                    "clickable": true,
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-rewind-15",
+                    "width": 120
+                },
+                "data": {}
+            },
+            {
+                "title": "$Forward15.Title",
+                "tip": "$Forward15.Tip",
+                "cid": "com.eniac.bilibiliplugin.forward",
+                "config": {
+                    "keyType": "default",
+                    "clickable": true,
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-fast-forward-15",
+                    "width": 120
+                },
+                "data": {}
+            },
+            {
+                "title": "$SeekWheel.Title",
+                "tip": "$SeekWheel.Tip",
+                "cid": "com.eniac.bilibiliplugin.seekwheel",
+                "config": {
+                    "keyType": "wheel",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-rotate-right",
+                    "width": 120,
+                    "wheel": {
+                        "step": 5
+                    }
+                },
+                "data": {}
+            },
+            {
+                "title": "$Volume.Title",
+                "tip": "$Volume.Tip",
+                "cid": "com.eniac.bilibiliplugin.volumewheel",
+                "config": {
+                    "keyType": "wheel",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-volume-high",
+                    "width": 120,
+                    "wheel": {
+                        "step": 5
+                    }
+                },
+                "data": {}
+            },
+            {
+                "title": "$Danmaku.Title",
+                "tip": "$Danmaku.Tip",
+                "cid": "com.eniac.bilibiliplugin.danmaku",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-comment-text-outline",
+                    "width": 120,
+                    "multiStyle": [
+                        { "icon": "mdi mdi-comment-off-outline", "fgColor": "#9499A0" },
+                        { "icon": "mdi mdi-comment-text-multiple", "fgColor": "#FB7299" }
+                    ]
+                },
+                "data": {}
+            },
+            {
+                "title": "$Like.Title",
+                "tip": "$Like.Tip",
+                "cid": "com.eniac.bilibiliplugin.like",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-thumb-up-outline",
+                    "width": 120,
+                    "multiStyle": [
+                        { "icon": "mdi mdi-thumb-up-outline", "fgColor": "#FFFFFF" },
+                        { "icon": "mdi mdi-thumb-up", "fgColor": "#FB7299" }
+                    ]
+                },
+                "data": {}
+            },
+            {
+                "title": "$Coin.Title",
+                "tip": "$Coin.Tip",
+                "cid": "com.eniac.bilibiliplugin.coin",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-circle-multiple-outline",
+                    "width": 120,
+                    "multiStyle": [
+                        { "icon": "mdi mdi-circle-multiple-outline", "fgColor": "#FFFFFF" },
+                        { "icon": "mdi mdi-circle-multiple", "fgColor": "#FB7299" }
+                    ]
+                },
+                "data": {}
+            },
+            {
+                "title": "$Favorite.Title",
+                "tip": "$Favorite.Tip",
+                "cid": "com.eniac.bilibiliplugin.favorite",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-star-outline",
+                    "width": 120,
+                    "multiStyle": [
+                        { "icon": "mdi mdi-star-outline", "fgColor": "#FFFFFF" },
+                        { "icon": "mdi mdi-star", "fgColor": "#FB7299" }
+                    ]
+                },
+                "data": {}
+            }
+        ]
+    },
+    "local": {
+        "en": {
+            "PluginName": "Bilibili",
+            "Config": {
+                "Title": "Bilibili Setup",
+                "Step1": {
+                    "Title": "Start the bridge service",
+                    "Description": "The plugin talks to a small local bridge that drives the Bilibili Mac app. Start it once in a terminal (keep it running), or install it as a login agent.",
+                    "Instructions": "In the project folder run:\n\n  npm install        (first time only)\n  npm run macos:bridge\n\nOr install it to auto-start on login:\n\n  bash macos-bridge/install-launchagent.sh",
+                    "Button": "Copy command"
+                },
+                "Step2": {
+                    "Title": "Run Bilibili in debug mode",
+                    "Description": "The Bilibili app must run with a remote-debugging port so the bridge can control its player. Click below to restart it in debug mode (the bridge also does this automatically on start).",
+                    "Button": "Restart Bilibili (debug mode)",
+                    "Idle": "Not restarted yet",
+                    "Working": "Restarting…",
+                    "Done": "Bilibili restarted in debug mode",
+                    "Error": "Failed to restart Bilibili"
+                },
+                "Step3": {
+                    "Title": "Test connection",
+                    "Description": "Play any video in the Bilibili app, then test the connection.",
+                    "Button": "Test connection",
+                    "Idle": "Click to test",
+                    "Testing": "Testing…",
+                    "Connected": "Connected",
+                    "NotConnected": "Not connected. Make sure the bridge is running and Bilibili is in debug mode."
+                },
+                "Next": "Next",
+                "Back": "Back",
+                "Finish": "Finish",
+                "Complete": "Setup complete!"
+            },
+            "NowPlaying": {
+                "Title": "Now Playing",
+                "Tip": "Show current video, uploader, cover and progress",
+                "UI": {
+                    "ShowTitle": "Show Title",
+                    "ShowUp": "Show Uploader",
+                    "ShowCover": "Show Cover",
+                    "ShowProgress": "Show Progress Bar"
+                }
+            },
+            "Progress": { "Title": "Progress", "Tip": "Drag to seek the video" },
+            "PlayPause": { "Title": "Play/Pause", "Tip": "Toggle playback" },
+            "Volume": { "Title": "Volume", "Tip": "Rotate to change the video's volume (in-app, not system)" },
+            "Danmaku": { "Title": "Danmaku", "Tip": "Show / hide danmaku (on-screen comments)" },
+            "Next": { "Title": "Next", "Tip": "Next part / episode" },
+            "Back15": { "Title": "Back 15s", "Tip": "Rewind 15 seconds" },
+            "Forward15": { "Title": "Forward 15s", "Tip": "Forward 15 seconds" },
+            "SeekWheel": { "Title": "Seek Wheel", "Tip": "Rotate to fine-tune the position" },
+            "Like": { "Title": "Like", "Tip": "Like the video (tap again to undo)" },
+            "Coin": { "Title": "Coin", "Tip": "Give a coin — may open a confirm dialog unless you turned that off in Bilibili" },
+            "Favorite": { "Title": "Favorite", "Tip": "Add to favorites — opens the folder picker" }
+        },
+        "zh-CN": {
+            "PluginName": "哔哩哔哩",
+            "Config": {
+                "Title": "哔哩哔哩设置",
+                "Step1": {
+                    "Title": "启动桥接服务",
+                    "Description": "插件通过一个本地小服务来驱动哔哩哔哩 Mac 客户端。请在终端启动它一次（保持运行），或装成开机自启。",
+                    "Instructions": "在项目目录执行：\n\n  npm install        （首次）\n  npm run macos:bridge\n\n或安装为开机自启：\n\n  bash macos-bridge/install-launchagent.sh",
+                    "Button": "复制命令"
+                },
+                "Step2": {
+                    "Title": "以调试模式运行哔哩哔哩",
+                    "Description": "哔哩哔哩客户端需要带「远程调试端口」启动，桥接服务才能控制它的播放器。点击下方一键重启（桥接服务启动时也会自动处理）。",
+                    "Button": "一键重启哔哩哔哩（调试模式）",
+                    "Idle": "尚未重启",
+                    "Working": "正在重启…",
+                    "Done": "已以调试模式重启哔哩哔哩",
+                    "Error": "重启失败"
+                },
+                "Step3": {
+                    "Title": "测试连接",
+                    "Description": "在哔哩哔哩里播放任意视频，然后测试连接。",
+                    "Button": "测试连接",
+                    "Idle": "点击测试",
+                    "Testing": "正在测试…",
+                    "Connected": "连接成功",
+                    "NotConnected": "未连接。请确认桥接服务在运行、且哔哩哔哩处于调试模式。"
+                },
+                "Next": "下一步",
+                "Back": "上一步",
+                "Finish": "完成",
+                "Complete": "设置完成！"
+            },
+            "NowPlaying": {
+                "Title": "正在播放",
+                "Tip": "显示当前视频、UP主、封面与进度",
+                "UI": {
+                    "ShowTitle": "显示标题",
+                    "ShowUp": "显示UP主",
+                    "ShowCover": "显示封面",
+                    "ShowProgress": "显示进度条"
+                }
+            },
+            "Progress": { "Title": "进度条", "Tip": "拖动以跳转进度" },
+            "PlayPause": { "Title": "播放/暂停", "Tip": "切换播放状态" },
+            "Volume": { "Title": "音量", "Tip": "旋转调节视频音量（软件内，非系统音量）" },
+            "Danmaku": { "Title": "弹幕", "Tip": "显示 / 隐藏弹幕" },
+            "Next": { "Title": "下一集", "Tip": "下一P / 下一集" },
+            "Back15": { "Title": "快退15秒", "Tip": "后退 15 秒" },
+            "Forward15": { "Title": "快进15秒", "Tip": "前进 15 秒" },
+            "SeekWheel": { "Title": "进度旋钮", "Tip": "旋转以微调进度" },
+            "Like": { "Title": "点赞", "Tip": "给视频点赞（再按一次取消）" },
+            "Coin": { "Title": "投币", "Tip": "投币 —— 若未在 B 站关闭确认，会弹出确认框" },
+            "Favorite": { "Title": "收藏", "Tip": "收藏 —— 打开收藏夹选择" }
+        },
+        "ja": {
+            "PluginName": "ビリビリ",
+            "Config": {
+                "Title": "ビリビリ設定",
+                "Step1": {
+                    "Title": "ブリッジサービスを起動",
+                    "Description": "本プラグインはローカルの小さなブリッジ経由でビリビリ Mac アプリを操作します。ターミナルで一度起動（起動したまま）するか、ログイン時自動起動として導入してください。",
+                    "Instructions": "プロジェクトフォルダで実行：\n\n  npm install        （初回のみ）\n  npm run macos:bridge\n\nまたは自動起動として導入：\n\n  bash macos-bridge/install-launchagent.sh",
+                    "Button": "コマンドをコピー"
+                },
+                "Step2": {
+                    "Title": "デバッグモードでビリビリを起動",
+                    "Description": "ビリビリアプリをリモートデバッグポート付きで起動する必要があります。下のボタンで再起動できます（ブリッジ起動時にも自動で行います）。",
+                    "Button": "ビリビリを再起動（デバッグ）",
+                    "Idle": "未再起動",
+                    "Working": "再起動中…",
+                    "Done": "デバッグモードで再起動しました",
+                    "Error": "再起動に失敗しました"
+                },
+                "Step3": {
+                    "Title": "接続テスト",
+                    "Description": "ビリビリで任意の動画を再生してから接続をテストしてください。",
+                    "Button": "接続をテスト",
+                    "Idle": "クリックしてテスト",
+                    "Testing": "テスト中…",
+                    "Connected": "接続成功",
+                    "NotConnected": "未接続。ブリッジが起動中で、ビリビリがデバッグモードか確認してください。"
+                },
+                "Next": "次へ",
+                "Back": "戻る",
+                "Finish": "完了",
+                "Complete": "設定完了！"
+            },
+            "NowPlaying": {
+                "Title": "再生中",
+                "Tip": "現在の動画 / 投稿者 / サムネ / 進行を表示",
+                "UI": {
+                    "ShowTitle": "タイトルを表示",
+                    "ShowUp": "投稿者を表示",
+                    "ShowCover": "サムネを表示",
+                    "ShowProgress": "進行バーを表示"
+                }
+            },
+            "Progress": { "Title": "進行バー", "Tip": "ドラッグでシーク" },
+            "PlayPause": { "Title": "再生/一時停止", "Tip": "再生を切り替え" },
+            "Volume": { "Title": "音量", "Tip": "回して動画の音量を調整（システムではなくアプリ内）" },
+            "Danmaku": { "Title": "弾幕", "Tip": "弾幕の表示 / 非表示" },
+            "Next": { "Title": "次へ", "Tip": "次のパート / 話" },
+            "Back15": { "Title": "15秒戻る", "Tip": "15秒巻き戻し" },
+            "Forward15": { "Title": "15秒進む", "Tip": "15秒早送り" },
+            "SeekWheel": { "Title": "シークホイール", "Tip": "回して微調整" },
+            "Like": { "Title": "いいね", "Tip": "いいね（もう一度で取り消し）" },
+            "Coin": { "Title": "コイン", "Tip": "コインを投げる —— Bilibili設定次第で確認ダイアログが出ます" },
+            "Favorite": { "Title": "お気に入り", "Tip": "お気に入り —— フォルダ選択が開きます" }
+        }
+    }
+}
