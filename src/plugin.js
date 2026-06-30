@@ -122,7 +122,7 @@ function deriveTimeline() {
 // 轮询 CDP → 更新按键
 // ============================================================================
 
-let lastVideoKey, lastPlayState, lastSocialKey, lastExtrasKey;
+let lastVideoKey, lastPlayState, lastSocialKey, lastExtrasKey, lastTimelineKey;
 
 function applyState() {
     currentState.video = deriveVideo();
@@ -138,7 +138,9 @@ function applyState() {
     if (sKey !== lastSocialKey) { lastSocialKey = sKey; updateSocialKeys(); }
     const eKey = JSON.stringify(currentState.extras);
     if (eKey !== lastExtrasKey) { lastExtrasKey = eKey; updateExtrasKeys(); }
-    updateTimelineKeys();                                                            // 每次轮询刷进度
+    // 进度刷新：仅在进度真正变化时才发（约 2Hz）。空闲/暂停时进度不变 → 不再每轮猛刷设备。
+    const tlKey = `${Math.round((currentState.timeline.currentTime || 0) / 500)}:${currentState.timeline.totalTime || 0}`;
+    if (tlKey !== lastTimelineKey) { lastTimelineKey = tlKey; updateTimelineKeys(); }
 }
 
 async function onSnapshot(s) {
@@ -269,36 +271,19 @@ async function updateNowPlayingKey(serialNumber, key) {
         showCover: d.showCover !== false,
         showProgress: d.showProgress !== false,
     };
-    const v = currentState.video, t = currentState.timeline;
-    // 内容签名：时间按秒取整 → 最多 ~1Hz 重绘，内容不变就完全不绘（避免刷爆设备导致超时）
-    const sig = `${v?.title || ''}|${v?.up || ''}|${v?.coverBase64 ? 1 : 0}|${currentState.playState}|` +
-        `${Math.floor((t.currentTime || 0) / 1000)}|${Math.floor((t.totalTime || 0) / 1000)}|` +
-        `${key.style?.width || 600}|${options.showTitle}${options.showUp}${options.showCover}${options.showProgress}`;
-    if (key._npSig === sig) return;
-    key._npSig = sig;
-    if (key._npDrawing) return;                     // 上一帧还在画，跳过，杜绝积压
-    key._npDrawing = true;
-    try {
-        const width = key.style?.width || 600;
-        const buffer = await canvasRenderer.render(currentState, options, width, 60);
-        key.style.showImage = true;
-        key.style.showIcon = false;
-        key.style.showTitle = false;
-        key.style.image = `data:image/png;base64,${buffer.toString('base64')}`;
-        await plugin.draw(serialNumber, key, 'draw').catch((e) => logger.error('[Plugin] draw 失败: ' + (e && e.message || e)));
-    } catch (e) {
-        logger.error('[Plugin] 绘制 nowplaying 失败: ' + e.message);
-    } finally {
-        key._npDrawing = false;
-    }
+    const width = key.style?.width || 600;
+    const buffer = await canvasRenderer.render(currentState, options, width, 60);
+    key.style.showImage = true;
+    key.style.showIcon = false;
+    key.style.showTitle = false;
+    key.style.image = `data:image/png;base64,${buffer.toString('base64')}`;
+    guard(plugin.draw(serialNumber, key, 'draw'), 'draw');
 }
 
 function updateProgressKey(serialNumber, key) {
     if (Date.now() < sliderHoldUntil) return;       // 用户正在拖动，先不抢
     const { currentTime, totalTime } = currentState.timeline;
-    const pct = totalTime > 0 ? Math.max(0, Math.min(100, Math.round((currentTime / totalTime) * 100))) : 0;
-    if (key._sliderPct === pct) return;             // 整数百分比没变，就不重发（避免刷爆设备）
-    key._sliderPct = pct;
+    const pct = totalTime > 0 ? Math.max(0, Math.min(100, (currentTime / totalTime) * 100)) : 0;
     setSlider(serialNumber, key, pct);
 }
 
@@ -481,19 +466,14 @@ plugin.on('ui.message', async (payload) => {
     }
 });
 
-// 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）
-// 关键：先优雅退出，轮询等它真正退出后再启动；pkill 仅作超时兜底——
-// 否则在退出途中强杀会让新实例「跳两下又崩」。
+// 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）。
+// 与实测可用的手动命令一致：优雅退出 → 等 2 秒 → 带端口启动。
+// 不用 pkill/轮询——在退出途中强杀会让新实例「跳两下又崩」。
 function restartBilibiliDebug() {
     const app = APP_NAME;
-    const cmd =
-        `osascript -e 'quit app "${app}"' >/dev/null 2>&1; ` +
-        `for i in $(seq 1 30); do pgrep -f "${app}.app/Contents/MacOS" >/dev/null 2>&1 || break; sleep 0.3; done; ` +
-        `pgrep -f "${app}.app/Contents/MacOS" >/dev/null 2>&1 && { pkill -f "${app}.app" >/dev/null 2>&1; sleep 2; }; ` +
-        `sleep 1; ` +
-        `open -a "${app}" --args --remote-debugging-port=${CDP_PORT}`;
+    const cmd = `osascript -e 'quit app "${app}"' >/dev/null 2>&1; sleep 2; open -a "${app}" --args --remote-debugging-port=${CDP_PORT}`;
     return new Promise((resolve) => {
-        exec(cmd, { shell: '/bin/bash' }, (error) => {
+        exec(cmd, (error) => {
             if (error) { logger.error(`[Plugin] 重启哔哩哔哩失败: ${error.message}`); resolve({ success: false, error: error.message }); }
             else { cdpReady = false; resolve({ success: true }); }
         });

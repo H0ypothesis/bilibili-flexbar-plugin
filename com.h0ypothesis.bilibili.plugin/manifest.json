@@ -1,7 +1,7 @@
 {
     "name": "BilibiliPlugin",
     "uuid": "com.h0ypothesis.bilibili",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "author": "H0ypothesis",
     "entry": "backend/plugin.cjs",
     "description": "哔哩哔哩控制面板 - 通过 Electron 调试协议驱动 Mac 客户端播放器（进度拖拽/播放暂停/下一集/音量/弹幕/点赞投币收藏）",
