@@ -162,15 +162,6 @@ bilibili-flexbar-plugin/
 └── package.json
 ```
 
-## 发布到 FlexGate（官方插件库）
-
-本仓库结构符合官方要求（GitHub 托管、`com.<author>.<name>` 标识、manifest 通过官方 Schema、
-插件文件夹在根目录、`repo` 字段已填）。发布两条路：
-
-1. **GitHub Release**：打一个与 `manifest.json` `version` 对应的 tag（如 `v1.0.0`），CI 会自动
-   构建并把 `com.h0ypothesis.bilibili.flexplugin` 挂到 Release，供导入。
-2. **FlexGate**：在 FlexGate 个人主页填入本仓库 URL + 截图 + 分类，校验通过即可被一键安装。
-
 ## 致谢
 
 - 结构参考姊妹项目 [ENIAC-Tech/NeteasePlugin](https://github.com/ENIAC-Tech/NeteasePlugin)、
