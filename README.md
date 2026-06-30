@@ -60,25 +60,35 @@
 > 等命令请切到 **Node 20 LTS**（推荐用 nvm：`nvm install 20 && nvm use 20`）。
 > 桥接服务 `macos-bridge` 与构建本身在新版 Node 上正常。
 
-## 快速开始
+## 一键安装（新设备）⭐
+
+新 Mac 上先装好 **哔哩哔哩客户端**、**FlexDesigner**（并至少打开过一次）、**Node 18+**，然后：
 
 ```bash
-# 1) 安装依赖
-npm install
-
-# 2) 生成图标 + 构建插件后端
-npm run gen:icon
-npm run build
-
-# 3) 启动桥接服务（会自动以调试端口启动/重启哔哩哔哩）
-npm run macos:bridge
-#   看到 “WebSocket 服务已启动: ws://127.0.0.1:35020” 即就绪
-
-# 4) 在 FlexDesigner 里加载插件（需 Node 20，见上方说明）
-nvm use 20
-npm run dev          # 链接并热重载；插件会出现在 Key Library
+git clone https://github.com/H0ypothesis/bilibili-flexbar-plugin.git
+cd bilibili-flexbar-plugin
+bash scripts/setup.sh        # 装依赖 + 构建 + 安装进 FlexDesigner
 ```
 
+脚本跑完按提示三步：① **重启 FlexDesigner**，把按键从 Key Library 拖到 FlexBar；
+② 启动桥接 `npm run macos:bridge`（或装开机自启）；③ 播放视频即可。
+
+> 这条路用仓库自带的 `plugin:copy`（直接把插件拷进 FlexDesigner 数据目录），**任意 Node 版本都行**，
+> 不碰 `flexcli`，所以不受上面 Node 23+ 限制。想自己分步装见下。
+
+## 开发 / 手动安装
+
+```bash
+npm install
+npm run build                # 构建插件后端（图标已内置，无需 gen:icon）
+npm run plugin:copy          # 安装进 FlexDesigner（任意 Node 版本）
+npm run macos:bridge         # 启动桥接，看到 “WebSocket 服务已启动…” 即就绪
+
+# 想要热重载开发（改 src 自动重装）——需 Node 20（flexcli 限制）
+nvm use 20 && npm run dev
+```
+
+改完代码重装：`npm run build && npm run plugin:copy`，再重启 FlexDesigner。
 然后在哔哩哔哩里播放任意视频，把插件按键拖到 FlexBar 上即可使用。
 
 ### 让桥接服务常驻 / 开机自启

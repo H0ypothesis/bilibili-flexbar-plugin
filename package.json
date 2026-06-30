@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "FlexBar plugin to control the macOS Bilibili app (seek/play/pause/next) via Electron DevTools",
   "scripts": {
+    "setup": "bash scripts/setup.sh",
     "build": "rollup -c",
     "dev": "npm-run-all plugin:unlink plugin:link -p plugin:watch plugin:debug",
     "plugin:watch": "rollup -c -w --watch.onEnd=\"npm run plugin:restart\"",
