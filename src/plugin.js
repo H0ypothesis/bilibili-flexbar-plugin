@@ -269,19 +269,36 @@ async function updateNowPlayingKey(serialNumber, key) {
         showCover: d.showCover !== false,
         showProgress: d.showProgress !== false,
     };
-    const width = key.style?.width || 600;
-    const buffer = await canvasRenderer.render(currentState, options, width, 60);
-    key.style.showImage = true;
-    key.style.showIcon = false;
-    key.style.showTitle = false;
-    key.style.image = `data:image/png;base64,${buffer.toString('base64')}`;
-    guard(plugin.draw(serialNumber, key, 'draw'), 'draw');
+    const v = currentState.video, t = currentState.timeline;
+    // 内容签名：时间按秒取整 → 最多 ~1Hz 重绘，内容不变就完全不绘（避免刷爆设备导致超时）
+    const sig = `${v?.title || ''}|${v?.up || ''}|${v?.coverBase64 ? 1 : 0}|${currentState.playState}|` +
+        `${Math.floor((t.currentTime || 0) / 1000)}|${Math.floor((t.totalTime || 0) / 1000)}|` +
+        `${key.style?.width || 600}|${options.showTitle}${options.showUp}${options.showCover}${options.showProgress}`;
+    if (key._npSig === sig) return;
+    key._npSig = sig;
+    if (key._npDrawing) return;                     // 上一帧还在画，跳过，杜绝积压
+    key._npDrawing = true;
+    try {
+        const width = key.style?.width || 600;
+        const buffer = await canvasRenderer.render(currentState, options, width, 60);
+        key.style.showImage = true;
+        key.style.showIcon = false;
+        key.style.showTitle = false;
+        key.style.image = `data:image/png;base64,${buffer.toString('base64')}`;
+        await plugin.draw(serialNumber, key, 'draw').catch((e) => logger.error('[Plugin] draw 失败: ' + (e && e.message || e)));
+    } catch (e) {
+        logger.error('[Plugin] 绘制 nowplaying 失败: ' + e.message);
+    } finally {
+        key._npDrawing = false;
+    }
 }
 
 function updateProgressKey(serialNumber, key) {
     if (Date.now() < sliderHoldUntil) return;       // 用户正在拖动，先不抢
     const { currentTime, totalTime } = currentState.timeline;
-    const pct = totalTime > 0 ? Math.max(0, Math.min(100, (currentTime / totalTime) * 100)) : 0;
+    const pct = totalTime > 0 ? Math.max(0, Math.min(100, Math.round((currentTime / totalTime) * 100))) : 0;
+    if (key._sliderPct === pct) return;             // 整数百分比没变，就不重发（避免刷爆设备）
+    key._sliderPct = pct;
     setSlider(serialNumber, key, pct);
 }
 
