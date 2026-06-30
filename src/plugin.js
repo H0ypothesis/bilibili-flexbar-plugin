@@ -188,9 +188,20 @@ async function pollLoop() {
 // 哔哩哔哩 App 启动管理
 // ============================================================================
 
+// ★ 根因修复：FlexDesigner 是 Electron，它以 ELECTRON_RUN_AS_NODE=1 运行插件后端(.cjs)。该变量会被
+// 我们 spawn/exec 的 open 继承，再传给同为 Electron 的哔哩哔哩 → B 站以「纯 Node 模式」启动、不开窗口
+// 直接退出（表现为「跳一下就没了」）。所以拉起 B 站前必须剥离 ELECTRON_*/NODE_OPTIONS 等变量。
+function cleanLaunchEnv() {
+    const env = { ...process.env };
+    for (const k of Object.keys(env)) {
+        if (k.startsWith('ELECTRON_') || k === 'NODE_OPTIONS') delete env[k];
+    }
+    return env;
+}
+
 function launchApp() {
     try {
-        const p = spawn('open', ['-a', APP_NAME, '--args', `--remote-debugging-port=${CDP_PORT}`, '--remote-allow-origins=*'], { stdio: 'ignore', detached: true });
+        const p = spawn('open', ['-a', APP_NAME, '--args', `--remote-debugging-port=${CDP_PORT}`], { stdio: 'ignore', detached: true, env: cleanLaunchEnv() });
         p.on('error', (e) => logger.error('[Plugin] 启动哔哩哔哩失败: ' + e.message));
         p.unref();
     } catch (e) { logger.error('[Plugin] 启动哔哩哔哩异常: ' + e.message); }
@@ -276,7 +287,7 @@ async function updateNowPlayingKey(serialNumber, key) {
     key.style.showIcon = false;
     key.style.showTitle = false;
     key.style.image = `data:image/png;base64,${buffer.toString('base64')}`;
-    guard(plugin.draw(serialNumber, key, 'draw'), 'draw');
+    guardKey(plugin.draw(serialNumber, key, 'draw'), 'draw', serialNumber, key);
 }
 
 function updateProgressKey(serialNumber, key) {
@@ -295,12 +306,29 @@ function guard(p, label) {
     try { if (p && typeof p.then === 'function') p.catch((e) => logger.error(`[Plugin] ${label} 失败: ${e && e.message || e}`)); }
     catch (e) { logger.error(`[Plugin] ${label} 异常: ${e && e.message || e}`); }
 }
+// 带按键身份的 guard：若 SDK 回「key is not alive」（设备重插/切页后旧句柄失效），
+// 就地把该死键从注册表剔除——停止刷它，等下一次 plugin.alive 重新注册（自愈）。
+function guardKey(p, label, serialNumber, key) {
+    try {
+        if (!p || typeof p.then !== 'function') return;
+        p.catch((e) => {
+            const msg = (e && e.message) || String(e);
+            logger.error(`[Plugin] ${label} 失败: ${msg}`);
+            if (/not alive/i.test(msg) && serialNumber && key) {
+                const dev = deviceKeys.get(serialNumber);
+                if (dev && dev.keys.delete(key.uid)) {
+                    logger.warn(`[Plugin] 剔除失活按键 ${key.cid} (uid=${key.uid})，等待重新注册`);
+                }
+            }
+        });
+    } catch (e) { logger.error(`[Plugin] ${label} 异常: ${e && e.message || e}`); }
+}
 function setSlider(serialNumber, key, value) {
-    try { guard(typeof plugin.setSlider === 'function' ? plugin.setSlider(serialNumber, key, value) : plugin.set(serialNumber, key, { value }), 'setSlider'); }
+    try { guardKey(typeof plugin.setSlider === 'function' ? plugin.setSlider(serialNumber, key, value) : plugin.set(serialNumber, key, { value }), 'setSlider', serialNumber, key); }
     catch (e) { logger.error(`[Plugin] setSlider 异常: ${e.message}`); }
 }
 function setMultiState(serialNumber, key, state) {
-    try { guard(typeof plugin.setMultiState === 'function' ? plugin.setMultiState(serialNumber, key, state) : plugin.set(serialNumber, key, { state }), 'setMultiState'); }
+    try { guardKey(typeof plugin.setMultiState === 'function' ? plugin.setMultiState(serialNumber, key, state) : plugin.set(serialNumber, key, { state }), 'setMultiState', serialNumber, key); }
     catch (e) { logger.error(`[Plugin] setMultiState 异常: ${e.message}`); }
 }
 function haptic(serialNumber) {
@@ -418,9 +446,12 @@ function optimisticSkip(seconds) {
 // ============================================================================
 
 function registerDevice(serialNumber, keys) {
-    if (!deviceKeys.has(serialNumber)) deviceKeys.set(serialNumber, { keys: new Map() });
-    const deviceData = deviceKeys.get(serialNumber);
-    for (const key of keys) deviceData.keys.set(key.uid, key);
+    // 权威替换：plugin.alive 给的是「此刻设备上活跃的完整按键集」。只保留本次的键，
+    // 自动丢弃因设备重插/切页而失效的旧 uid 句柄——否则会一直往死句柄上画，全报 not alive。
+    const map = new Map();
+    for (const key of keys || []) map.set(key.uid, key);
+    deviceKeys.set(serialNumber, { keys: map });
+    logger.info(`[Plugin] 设备 ${serialNumber} 注册 ${map.size} 个活跃按键: ${(keys || []).map((k) => String(k.cid).split('.').pop()).join(',')}`);
     startEngine();
 }
 
@@ -449,7 +480,19 @@ plugin.on('plugin.data', (payload) => {
     return { status: 'success' };
 });
 
-plugin.on('device.status', () => { /* 设备重连时 plugin.alive 会重新注册 */ });
+plugin.on('device.status', (items) => {
+    // 设备拔出/断开：立刻丢弃该设备的按键句柄（已失效）。重连后 plugin.alive 会重新注册。
+    if (!Array.isArray(items)) return;
+    for (const it of items) {
+        if (!it || !it.serialNumber) continue;
+        if (it.status === 'disconnected') {
+            deviceKeys.delete(it.serialNumber);
+            logger.info(`[Plugin] 设备 ${it.serialNumber} 断开，已清除其按键句柄`);
+        } else if (it.status === 'connected') {
+            logger.info(`[Plugin] 设备 ${it.serialNumber} 已连接，等待 plugin.alive 注册按键`);
+        }
+    }
+});
 
 plugin.on('ui.message', async (payload) => {
     switch (payload.action) {
@@ -467,17 +510,30 @@ plugin.on('ui.message', async (payload) => {
 
 // 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）
 function restartBilibiliDebug() {
-    // 关键：插件自己开着一条到 B 站的 CDP 长连接，会拖慢 B 站退出，导致重启时新实例「跳一下就崩」。
-    // 所以重启期间先暂停轮询、主动断开 CDP，让 B 站干净退出，再走和手动一致的：优雅退出→等2秒→带端口启动。
+    // 重启期间先暂停轮询、断开 CDP（避免插件的 CDP 长连接拖慢退出）。
     restarting = true;
     cdpReady = false;
     try { cdp.close(); } catch {}
-    const cmd = `osascript -e 'quit app "${APP_NAME}"' >/dev/null 2>&1; sleep 2; open -a "${APP_NAME}" --args --remote-debugging-port=${CDP_PORT}`;
+    // 关键修复（解决「跳一下就没了」）：B 站是 Electron，优雅退出常需 2s 以上；固定 sleep 2 会在
+    // 它还没退干净时就 open，只是把正在退出的旧实例「激活一下」，随后退出完成 → 新实例没带端口起来。
+    // 这里刻意不用 osascript/AppleEvents（quit/is running 需要 macOS「自动化」授权，FlexDesigner 子进程未必有）：
+    // 用 ps 找主进程 PID（grep -F 按字节匹配中文，不受 locale 影响）→ SIGTERM 优雅退出 →
+    // 轮询等它「真正消失」→ 仍在则 SIGKILL 兜底 → 再带调试端口全新 open。kill 的是自身进程，无需任何授权。
+    const mainProc = JSON.stringify(`${APP_NAME}.app/Contents/MacOS/${APP_NAME}`);  // 仅匹配主进程
+    const findPid = `ps -ax -o pid=,command= | grep -F ${mainProc} | grep -v grep | awk '{print $1}' | head -1`;
+    const cmd =
+        `pid=$(${findPid}); ` +
+        `if [ -n "$pid" ]; then ` +
+        `  kill "$pid" 2>/dev/null; ` +
+        `  for i in $(seq 1 40); do ps -p "$pid" >/dev/null 2>&1 || break; sleep 0.25; done; ` +
+        `  if ps -p "$pid" >/dev/null 2>&1; then kill -9 "$pid" 2>/dev/null; sleep 1; fi; ` +
+        `fi; ` +
+        `open -a "${APP_NAME}" --args --remote-debugging-port=${CDP_PORT}`;
     return new Promise((resolve) => {
-        exec(cmd, (error) => {
+        exec(cmd, { timeout: 20000, env: cleanLaunchEnv() }, (error) => {
             restarting = false;   // 恢复轮询，pollLoop 会连到新实例
             if (error) { logger.error(`[Plugin] 重启哔哩哔哩失败: ${error.message}`); resolve({ success: false, error: error.message }); }
-            else { resolve({ success: true }); }
+            else { logger.info('[Plugin] 已带调试端口重启哔哩哔哩'); resolve({ success: true }); }
         });
     });
 }

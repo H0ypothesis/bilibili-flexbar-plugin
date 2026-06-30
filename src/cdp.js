@@ -36,6 +36,7 @@ class CDPClient {
 
         this.ws = null;
         this.targetId = null;
+        this.currentUrl = null;        // 当前所连页面的 url（用于判断是否在 player.html 播放页）
         this.nextId = 1;
         this.pending = new Map();      // id -> { resolve, reject, timer }
         this.connecting = null;        // 进行中的连接 Promise（防止并发重连）
@@ -81,26 +82,49 @@ class CDPClient {
 
         this.connecting = (async () => {
             const target = await this._resolvePlayerTarget();
-            await new Promise((resolve, reject) => {
-                const ws = new WebSocket(target.webSocketDebuggerUrl, { perMessageDeflate: false, maxPayload: 64 * 1024 * 1024 });
-                const onOpen = () => {
-                    ws.removeListener('error', onErr);
-                    this.ws = ws;
-                    this.targetId = target.id;
-                    this._wire(ws);
-                    this.debug(`CDP 已连接页面 ${target.id} (${(target.url || '').slice(0, 60)})`);
-                    resolve();
-                };
-                const onErr = (e) => { ws.removeListener('open', onOpen); reject(e); };
-                ws.once('open', onOpen);
-                ws.once('error', onErr);
-            });
-            // 打开 Runtime 域（evaluate 需要）
-            await this._send('Runtime.enable', {});
+            await this._connectTo(target);
         })();
 
         try { await this.connecting; }
         finally { this.connecting = null; }
+    }
+
+    // 连接到指定目标页面（建立 ws + 开 Runtime 域）。
+    async _connectTo(target) {
+        await new Promise((resolve, reject) => {
+            const ws = new WebSocket(target.webSocketDebuggerUrl, { perMessageDeflate: false, maxPayload: 64 * 1024 * 1024 });
+            const onOpen = () => {
+                ws.removeListener('error', onErr);
+                this.ws = ws;
+                this.targetId = target.id;
+                this.currentUrl = target.url || '';
+                this._wire(ws);
+                this.debug(`CDP 已连接页面 ${target.id} (${(target.url || '').slice(0, 60)})`);
+                resolve();
+            };
+            const onErr = (e) => { ws.removeListener('open', onOpen); reject(e); };
+            ws.once('open', onOpen);
+            ws.once('error', onErr);
+        });
+        // 打开 Runtime 域（evaluate 需要）
+        await this._send('Runtime.enable', {});
+    }
+
+    // 若当前没连在 player.html 播放页、但现在出现了 player.html 目标，则切过去。
+    // 解决：B 站刚启动时只有首页（bilibili 域名，被 fallback 连上），用户随后播放视频才出现 player.html，
+    // 旧连接若粘在首页就读不到正在播放、控制也无效。需在播放页出现时及时切换目标。
+    async _retargetToPlayerIfNeeded() {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        if (this.currentUrl && this.currentUrl.includes(this.urlMatch)) return;   // 已在播放页，不动
+        let list;
+        try { list = await this._httpJSON('/json/list'); } catch { return; }
+        const player = list.find((t) => t.type === 'page' && t.webSocketDebuggerUrl && (t.url || '').includes(this.urlMatch));
+        if (player && player.id !== this.targetId) {
+            this.debug(`发现播放页，切换目标 → ${player.id}`);
+            try { this.ws.terminate(); } catch {}
+            this.ws = null; this.targetId = null; this.currentUrl = null;
+            await this._connectTo(player);
+        }
     }
 
     _wire(ws) {
@@ -116,7 +140,7 @@ class CDPClient {
             }
         });
         const drop = (why) => {
-            if (this.ws === ws) { this.ws = null; this.targetId = null; }
+            if (this.ws === ws) { this.ws = null; this.targetId = null; this.currentUrl = null; }
             for (const [, p] of this.pending) { clearTimeout(p.timer); p.reject(new Error('CDP 连接断开: ' + why)); }
             this.pending.clear();
             this.debug('CDP 连接关闭: ' + why);
@@ -148,6 +172,7 @@ class CDPClient {
         for (let attempt = 0; attempt < 2; attempt++) {
             try {
                 await this._connect();
+                await this._retargetToPlayerIfNeeded();
                 const res = await this._send('Runtime.evaluate', {
                     expression,
                     returnByValue: true,
@@ -176,6 +201,7 @@ class CDPClient {
         try { if (this.ws) this.ws.terminate(); } catch {}
         this.ws = null;
         this.targetId = null;
+        this.currentUrl = null;
         for (const [, p] of this.pending) { clearTimeout(p.timer); p.reject(new Error('客户端关闭')); }
         this.pending.clear();
     }
