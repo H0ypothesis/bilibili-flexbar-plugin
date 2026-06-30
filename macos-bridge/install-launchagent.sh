@@ -3,7 +3,7 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LABEL="com.eniac.bilibiliplugin.bridge"
+LABEL="com.h0ypothesis.bilibili.bridge"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 LOG="$HERE/bridge.log"
 

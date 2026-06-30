@@ -2,7 +2,7 @@
 'use strict';
 /**
  * 生成哔哩哔哩风格的插件图标（粉底白色电视）并写入：
- *   - com.eniac.bilibiliplugin.plugin/resources/Bilibili.png
+ *   - com.h0ypothesis.bilibili.plugin/resources/Bilibili.png
  *   - 替换 manifest.json 中 keyLibrary.style.icon 的 data URI
  */
 const { createCanvas } = require('@napi-rs/canvas');
@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SIZE = 324;
-const PLUGIN_DIR = path.join(__dirname, '..', 'com.eniac.bilibiliplugin.plugin');
+const PLUGIN_DIR = path.join(__dirname, '..', 'com.h0ypothesis.bilibili.plugin');
 
 function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();

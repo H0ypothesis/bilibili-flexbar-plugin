@@ -1,10 +1,10 @@
 # BilibiliPlugin — FlexBar 哔哩哔哩控制插件 (macOS)
 
 在 FlexBar 上显示哔哩哔哩**正在播放**的视频（封面 / 标题 / UP主 / 进度），并直接控制
-**进度条拖拽、播放/暂停、下一集/上一集、快进/快退**。
+**进度条拖拽、播放/暂停、下一集、快进快退、音量、弹幕、点赞/投币/收藏**。
 
 <p align="center">
-  <img src="com.eniac.bilibiliplugin.plugin/resources/Bilibili.png" width="96" alt="Bilibili Plugin" />
+  <img src="com.h0ypothesis.bilibili.plugin/resources/Bilibili.png" width="96" alt="Bilibili Plugin" />
 </p>
 
 ## 工作原理
@@ -25,8 +25,10 @@
 
 - **进度条拖拽** = 设置 `video.currentTime`（逐帧精确）
 - **播放 / 暂停** = `video.play()` / `video.pause()`（读真实状态）
-- **下一集 / 上一集** = 点击播放器「下一P / 上一P」按钮
+- **下一集** = 点击播放器「下一P」按钮
 - **快进 / 快退** = `video.currentTime ± 15s`
+- **音量** = 设置 `video.volume`（播放器内音量，非系统音量）
+- **弹幕 / 点赞 / 投币 / 收藏** = 点击播放器里对应按钮
 - **标题 / UP主 / 封面** = 按 `bvid` 调哔哩哔哩 `view` 接口获取（稳定、含封面）
 
 > 插件本身只是一个 WebSocket 客户端（和姊妹项目 NeteasePlugin 一样的结构）；真正干活的是
@@ -39,9 +41,11 @@
 | 视频标题 / UP主 / 封面 / 进度显示 | ✅ |
 | 进度条**拖拽跳转**（slider 按键） | ✅ 逐帧精确 |
 | 播放 / 暂停（multiState 按键） | ✅ 真实状态同步 |
-| 下一集 / 上一集（多P / 分集） | ✅ 点击播放器按钮，单P视频可能无动作 |
+| 下一集（多P / 分集） | ✅ 点击播放器按钮，单P视频可能无动作 |
 | 快进 / 快退 15 秒 | ✅ |
-| 旋钮微调进度（wheel 按键） | ✅ |
+| 进度旋钮 / 音量旋钮（wheel 按键） | ✅ 音量为播放器内音量 |
+| 弹幕显示 / 隐藏 | ✅ |
+| 点赞 / 投币 / 收藏 | ✅ 状态高亮；投币/收藏按 B 站设置 |
 | 触感反馈（haptic） | ✅ 离散操作时 |
 
 ## 环境要求
@@ -91,9 +95,11 @@ bash macos-bridge/uninstall-launchagent.sh   # 撤销
 | 正在播放 | default | 封面 / 标题 / UP主 / 进度（可在配置里增减显示项）|
 | 进度条 | **slider** | 拖动跳转到任意位置 |
 | 播放/暂停 | **multiState** | 切换播放状态，图标随状态变化 |
-| 上一集 / 下一集 | default | 上一P / 下一P（多P或分集）|
+| 下一集 | default | 下一P / 下一集（多P或分集）|
 | 快退15秒 / 快进15秒 | default | 相对快退 / 快进 |
 | 进度旋钮 | **wheel** | 旋转微调进度（每格约 2 秒）|
+| 音量旋钮 | **wheel** | 旋转调节**视频内**音量（非系统音量）|
+| 弹幕 | **multiState** | 显示 / 隐藏弹幕，开启时高亮 |
 | 点赞 | **multiState** | 点赞/取消，已赞时高亮（粉色）|
 | 投币 | **multiState** | 投币，已投时高亮；视 B 站设置可能弹确认框 |
 | 收藏 | **multiState** | 收藏，已收藏时高亮；点击打开收藏夹选择 |
@@ -137,7 +143,7 @@ bilibili/
 ├── src/                         # 插件后端源码（rollup 打包）
 │   ├── plugin.js                #   WS 客户端 + 按键逻辑（slider/wheel/multiState）
 │   └── canvas-renderer.js       #   正在播放卡片绘制
-├── com.eniac.bilibiliplugin.plugin/
+├── com.h0ypothesis.bilibili.plugin/
 │   ├── manifest.json            #   按键定义 / i18n / 主题
 │   ├── config.json
 │   ├── resources/Bilibili.png   #   图标（由 scripts/gen-icon.js 生成）

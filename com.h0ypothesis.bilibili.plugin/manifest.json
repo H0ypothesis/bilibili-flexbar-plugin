@@ -1,11 +1,11 @@
 {
     "name": "BilibiliPlugin",
-    "uuid": "com.eniac.bilibiliplugin",
+    "uuid": "com.h0ypothesis.bilibili",
     "version": "1.0.0",
-    "author": "vibe",
+    "author": "H0ypothesis",
     "entry": "backend/plugin.cjs",
-    "description": "哔哩哔哩控制面板 - 通过 Electron 调试协议驱动 Mac 客户端播放器（进度拖拽/播放暂停/下一集）",
-    "repo": "",
+    "description": "哔哩哔哩控制面板 - 通过 Electron 调试协议驱动 Mac 客户端播放器（进度拖拽/播放暂停/下一集/音量/弹幕/点赞投币收藏）",
+    "repo": "https://github.com/H0ypothesis/bilibili-flexbar-plugin.git",
     "sdk": {
         "version": "1.0.0"
     },
@@ -34,7 +34,7 @@
             {
                 "title": "$NowPlaying.Title",
                 "tip": "$NowPlaying.Tip",
-                "cid": "com.eniac.bilibiliplugin.nowplaying",
+                "cid": "com.h0ypothesis.bilibili.nowplaying",
                 "config": {
                     "keyType": "default",
                     "clickable": false,
@@ -55,7 +55,7 @@
             {
                 "title": "$Progress.Title",
                 "tip": "$Progress.Tip",
-                "cid": "com.eniac.bilibiliplugin.progress",
+                "cid": "com.h0ypothesis.bilibili.progress",
                 "config": {
                     "keyType": "slider",
                     "platform": ["mac"]
@@ -77,7 +77,7 @@
             {
                 "title": "$PlayPause.Title",
                 "tip": "$PlayPause.Tip",
-                "cid": "com.eniac.bilibiliplugin.playpause",
+                "cid": "com.h0ypothesis.bilibili.playpause",
                 "config": {
                     "keyType": "multiState",
                     "platform": ["mac"]
@@ -101,7 +101,7 @@
             {
                 "title": "$Next.Title",
                 "tip": "$Next.Tip",
-                "cid": "com.eniac.bilibiliplugin.next",
+                "cid": "com.h0ypothesis.bilibili.next",
                 "config": {
                     "keyType": "default",
                     "clickable": true,
@@ -116,7 +116,7 @@
             {
                 "title": "$Back15.Title",
                 "tip": "$Back15.Tip",
-                "cid": "com.eniac.bilibiliplugin.back",
+                "cid": "com.h0ypothesis.bilibili.back",
                 "config": {
                     "keyType": "default",
                     "clickable": true,
@@ -131,7 +131,7 @@
             {
                 "title": "$Forward15.Title",
                 "tip": "$Forward15.Tip",
-                "cid": "com.eniac.bilibiliplugin.forward",
+                "cid": "com.h0ypothesis.bilibili.forward",
                 "config": {
                     "keyType": "default",
                     "clickable": true,
@@ -146,7 +146,7 @@
             {
                 "title": "$SeekWheel.Title",
                 "tip": "$SeekWheel.Tip",
-                "cid": "com.eniac.bilibiliplugin.seekwheel",
+                "cid": "com.h0ypothesis.bilibili.seekwheel",
                 "config": {
                     "keyType": "wheel",
                     "platform": ["mac"]
@@ -163,7 +163,7 @@
             {
                 "title": "$Volume.Title",
                 "tip": "$Volume.Tip",
-                "cid": "com.eniac.bilibiliplugin.volumewheel",
+                "cid": "com.h0ypothesis.bilibili.volumewheel",
                 "config": {
                     "keyType": "wheel",
                     "platform": ["mac"]
@@ -180,7 +180,7 @@
             {
                 "title": "$Danmaku.Title",
                 "tip": "$Danmaku.Tip",
-                "cid": "com.eniac.bilibiliplugin.danmaku",
+                "cid": "com.h0ypothesis.bilibili.danmaku",
                 "config": {
                     "keyType": "multiState",
                     "platform": ["mac"]
@@ -198,7 +198,7 @@
             {
                 "title": "$Like.Title",
                 "tip": "$Like.Tip",
-                "cid": "com.eniac.bilibiliplugin.like",
+                "cid": "com.h0ypothesis.bilibili.like",
                 "config": {
                     "keyType": "multiState",
                     "platform": ["mac"]
@@ -216,7 +216,7 @@
             {
                 "title": "$Coin.Title",
                 "tip": "$Coin.Tip",
-                "cid": "com.eniac.bilibiliplugin.coin",
+                "cid": "com.h0ypothesis.bilibili.coin",
                 "config": {
                     "keyType": "multiState",
                     "platform": ["mac"]
@@ -234,7 +234,7 @@
             {
                 "title": "$Favorite.Title",
                 "tip": "$Favorite.Tip",
-                "cid": "com.eniac.bilibiliplugin.favorite",
+                "cid": "com.h0ypothesis.bilibili.favorite",
                 "config": {
                     "keyType": "multiState",
                     "platform": ["mac"]

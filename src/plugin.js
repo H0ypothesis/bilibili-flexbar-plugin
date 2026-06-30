@@ -24,7 +24,7 @@ const { exec } = require('child_process');
 // 常量
 // ============================================================================
 
-const UUID = 'com.eniac.bilibiliplugin';
+const UUID = 'com.h0ypothesis.bilibili';
 const CID = {
     nowplaying: `${UUID}.nowplaying`,
     progress: `${UUID}.progress`,

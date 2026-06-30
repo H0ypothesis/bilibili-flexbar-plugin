@@ -2,14 +2,14 @@
 'use strict';
 /**
  * 不依赖 flexcli 的本地安装：把已构建的插件目录复制到 FlexDesigner 的插件目录。
- *   com.eniac.bilibiliplugin.plugin/  →  ~/Library/Application Support/FlexDesigner/data/plugins/com.eniac.bilibiliplugin/
+ *   com.h0ypothesis.bilibili.plugin/  →  ~/Library/Application Support/FlexDesigner/data/plugins/com.h0ypothesis.bilibili/
  * 复制后需重启 FlexDesigner 以加载。适合 flexcli 因 Node 版本无法运行时使用。
  */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const UUID = 'com.eniac.bilibiliplugin';
+const UUID = 'com.h0ypothesis.bilibili';
 const SRC = path.join(__dirname, '..', `${UUID}.plugin`);
 const DST = path.join(os.homedir(), 'Library', 'Application Support', 'FlexDesigner', 'data', 'plugins', UUID);
 
