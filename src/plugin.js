@@ -83,7 +83,7 @@ const canvasRenderer = new CanvasRenderer(logger);
 let sliderHoldUntil = 0;
 let wheelAccum = 0, wheelFlushTimer = null;
 let volAccum = 0, volFlushTimer = null;
-let pollTimer = null, engineStarted = false, ensuring = false;
+let pollTimer = null, engineStarted = false, ensuring = false, restarting = false;
 
 // ============================================================================
 // 派生：原始 → 按键状态
@@ -170,6 +170,7 @@ async function onSnapshot(s) {
 }
 
 async function pollLoop() {
+    if (restarting) { pollTimer = setTimeout(pollLoop, POLL_MS); return; }   // 重启 B 站期间暂停，别用 CDP 打扰它退出/启动
     try {
         const snap = await cdp.evaluate(STATE_EXPR);
         if (!cdpReady) { cdpReady = true; logger.info('[Plugin] 已连接哔哩哔哩播放器 (CDP)'); }
@@ -177,7 +178,7 @@ async function pollLoop() {
     } catch (e) {
         if (cdpReady) { cdpReady = false; logger.warn('[Plugin] 与哔哩哔哩连接断开: ' + e.message); }
         if (live.hasVideo) { live.hasVideo = false; applyState(); }
-        await ensureReachable(false);
+        if (!restarting) await ensureReachable(false);
     } finally {
         pollTimer = setTimeout(pollLoop, POLL_MS);
     }
@@ -466,13 +467,17 @@ plugin.on('ui.message', async (payload) => {
 
 // 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）
 function restartBilibiliDebug() {
-    // 与用户实测可用的手动命令完全一致：优雅退出 → 等 2 秒 → 带调试端口启动。
-    // 不用 pkill（会在退出途中强杀，导致新实例「跳两下又崩」），也不加 --remote-allow-origins。
+    // 关键：插件自己开着一条到 B 站的 CDP 长连接，会拖慢 B 站退出，导致重启时新实例「跳一下就崩」。
+    // 所以重启期间先暂停轮询、主动断开 CDP，让 B 站干净退出，再走和手动一致的：优雅退出→等2秒→带端口启动。
+    restarting = true;
+    cdpReady = false;
+    try { cdp.close(); } catch {}
     const cmd = `osascript -e 'quit app "${APP_NAME}"' >/dev/null 2>&1; sleep 2; open -a "${APP_NAME}" --args --remote-debugging-port=${CDP_PORT}`;
     return new Promise((resolve) => {
         exec(cmd, (error) => {
+            restarting = false;   // 恢复轮询，pollLoop 会连到新实例
             if (error) { logger.error(`[Plugin] 重启哔哩哔哩失败: ${error.message}`); resolve({ success: false, error: error.message }); }
-            else { cdpReady = false; resolve({ success: true }); }
+            else { resolve({ success: true }); }
         });
     });
 }
