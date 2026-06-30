@@ -2,5 +2,4 @@ node_modules/
 com.h0ypothesis.bilibili.plugin/backend/
 com.h0ypothesis.bilibili.plugin/logs/
 *.flexplugin
-macos-bridge/bridge.log
 .DS_Store

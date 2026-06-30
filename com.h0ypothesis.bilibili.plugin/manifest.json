@@ -264,7 +264,7 @@
                 },
                 "Step2": {
                     "Title": "Run Bilibili in debug mode",
-                    "Description": "The Bilibili app must run with a remote-debugging port so the bridge can control its player. Click below to restart it in debug mode (the bridge also does this automatically on start).",
+                    "Description": "The Bilibili app must run with a remote-debugging port so the plugin can control its player. The plugin launches it that way automatically; if it's already running without the port, click below to restart it in debug mode.",
                     "Button": "Restart Bilibili (debug mode)",
                     "Idle": "Not restarted yet",
                     "Working": "Restarting…",
@@ -278,7 +278,7 @@
                     "Idle": "Click to test",
                     "Testing": "Testing…",
                     "Connected": "Connected",
-                    "NotConnected": "Not connected. Make sure the bridge is running and Bilibili is in debug mode."
+                    "NotConnected": "Not connected. Make sure Bilibili is running in debug mode (use the button above) and a video is playing."
                 },
                 "Next": "Next",
                 "Back": "Back",
@@ -319,7 +319,7 @@
                 },
                 "Step2": {
                     "Title": "以调试模式运行哔哩哔哩",
-                    "Description": "哔哩哔哩客户端需要带「远程调试端口」启动，桥接服务才能控制它的播放器。点击下方一键重启（桥接服务启动时也会自动处理）。",
+                    "Description": "哔哩哔哩需要带「远程调试端口」启动，插件才能控制它。插件会自动以调试端口拉起它；若它已在运行但没开端口，点下方一键重启。",
                     "Button": "一键重启哔哩哔哩（调试模式）",
                     "Idle": "尚未重启",
                     "Working": "正在重启…",
@@ -333,7 +333,7 @@
                     "Idle": "点击测试",
                     "Testing": "正在测试…",
                     "Connected": "连接成功",
-                    "NotConnected": "未连接。请确认桥接服务在运行、且哔哩哔哩处于调试模式。"
+                    "NotConnected": "未连接。请确认哔哩哔哩以调试模式运行（可用上面的按钮重启），并在播放视频。"
                 },
                 "Next": "下一步",
                 "Back": "上一步",
@@ -374,7 +374,7 @@
                 },
                 "Step2": {
                     "Title": "デバッグモードでビリビリを起動",
-                    "Description": "ビリビリアプリをリモートデバッグポート付きで起動する必要があります。下のボタンで再起動できます（ブリッジ起動時にも自動で行います）。",
+                    "Description": "ビリビリをリモートデバッグポート付きで起動する必要があります。プラグインが自動で起動しますが、ポートなしで起動済みの場合は下のボタンで再起動してください。",
                     "Button": "ビリビリを再起動（デバッグ）",
                     "Idle": "未再起動",
                     "Working": "再起動中…",
@@ -388,7 +388,7 @@
                     "Idle": "クリックしてテスト",
                     "Testing": "テスト中…",
                     "Connected": "接続成功",
-                    "NotConnected": "未接続。ブリッジが起動中で、ビリビリがデバッグモードか確認してください。"
+                    "NotConnected": "未接続。ビリビリがデバッグモードで起動しているか（上のボタンで再起動）、動画を再生しているか確認してください。"
                 },
                 "Next": "次へ",
                 "Back": "戻る",

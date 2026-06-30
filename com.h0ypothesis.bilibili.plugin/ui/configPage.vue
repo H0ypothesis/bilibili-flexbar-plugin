@@ -7,23 +7,8 @@
       </v-card-title>
 
       <v-stepper v-model="currentStep" :items="stepItems" alt-labels>
-        <!-- Step 1: 启动桥接服务 -->
+        <!-- Step 1: 以调试模式运行哔哩哔哩 -->
         <template v-slot:item.1>
-          <v-card flat>
-            <v-card-text>
-              <p class="text-body-1 mb-4">{{ $t('Config.Step1.Description') }}</p>
-              <v-alert type="info" variant="tonal" class="mb-4">
-                <pre class="instructions">{{ $t('Config.Step1.Instructions') }}</pre>
-              </v-alert>
-              <v-btn color="#FB7299" variant="elevated" @click="copyCommand" prepend-icon="mdi-content-copy">
-                {{ $t('Config.Step1.Button') }}
-              </v-btn>
-            </v-card-text>
-          </v-card>
-        </template>
-
-        <!-- Step 2: 以调试模式运行哔哩哔哩 -->
-        <template v-slot:item.2>
           <v-card flat>
             <v-card-text>
               <p class="text-body-1 mb-4">{{ $t('Config.Step2.Description') }}</p>
@@ -43,8 +28,8 @@
           </v-card>
         </template>
 
-        <!-- Step 3: 测试连接 -->
-        <template v-slot:item.3>
+        <!-- Step 2: 测试连接 -->
+        <template v-slot:item.2>
           <v-card flat>
             <v-card-text>
               <p class="text-body-1 mb-4">{{ $t('Config.Step3.Description') }}</p>
@@ -74,7 +59,7 @@
             @click:prev="currentStep--"
             @click:next="handleNext"
             :prev-text="$t('Config.Back')"
-            :next-text="currentStep === 3 ? $t('Config.Finish') : $t('Config.Next')" />
+            :next-text="currentStep === 2 ? $t('Config.Finish') : $t('Config.Next')" />
         </template>
       </v-stepper>
     </v-card>
@@ -95,22 +80,12 @@ export default {
   computed: {
     stepItems() {
       return [
-        { title: this.$t('Config.Step1.Title'), value: 1 },
-        { title: this.$t('Config.Step2.Title'), value: 2 },
-        { title: this.$t('Config.Step3.Title'), value: 3 }
+        { title: this.$t('Config.Step2.Title'), value: 1 },
+        { title: this.$t('Config.Step3.Title'), value: 2 }
       ];
     }
   },
   methods: {
-    async copyCommand() {
-      const cmd = 'npm run macos:bridge';
-      try {
-        if (navigator && navigator.clipboard) await navigator.clipboard.writeText(cmd);
-        this.$fd.info('已复制: ' + cmd);
-      } catch (e) {
-        this.$fd.error('复制失败: ' + e.message);
-      }
-    },
     async restartDebug() {
       this.restartStatus = 'working';
       try {
@@ -137,7 +112,7 @@ export default {
       }
     },
     handleNext() {
-      if (this.currentStep === 3) { this.$fd.info(this.$t('Config.Complete')); return; }
+      if (this.currentStep === 2) { this.$fd.info(this.$t('Config.Complete')); return; }
       this.currentStep++;
     },
     async checkInitialConnection() {

@@ -15,7 +15,6 @@
     "plugin:pack": "flexcli plugin pack --path com.h0ypothesis.bilibili.plugin",
     "plugin:install": "flexcli plugin install --path ./com.h0ypothesis.bilibili.flexplugin --force",
     "plugin:copy": "node scripts/install-local.js",
-    "macos:bridge": "bash macos-bridge/start.sh",
     "gen:icon": "node scripts/gen-icon.js"
   },
   "type": "commonjs",

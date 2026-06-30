@@ -11,16 +11,16 @@
 
 哔哩哔哩 Mac 客户端（`/Applications/哔哩哔哩.app`，bundle `com.bilibili.bilibiliPC`）是一个
 **Electron 应用**。用 `--remote-debugging-port` 启动后，它会暴露 Chrome DevTools Protocol(CDP)，
-其中 `player.html` 页面承载真正的 `<video>` 元素。本插件据此实现控制：
+其中 `player.html` 页面承载真正的 `<video>` 元素。
+
+本插件是**自包含**的：插件后端（FlexDesigner 的 Node 子进程）**直接**通过 CDP 读取并驱动
+该 `<video>`，**不需要任何独立的后台服务**。
 
 ```
-哔哩哔哩.app (Electron, --remote-debugging-port=9222)
+FlexBar 插件后端 (backend/plugin.cjs，跑在 FlexDesigner 里)
      │  CDP：读取/驱动 player.html 里的 <video>
      ▼
- macos-bridge (Node 服务)  ──►  currentTime / duration / paused、标题/UP/封面
-     │                      ◄──  Play / Pause / Seek / 下一集 …
-     ▼  ws://127.0.0.1:35020
- FlexBar 插件 (backend/plugin.cjs)  ──►  FlexBar 按键
+哔哩哔哩.app (Electron, --remote-debugging-port=9222)
 ```
 
 - **进度条拖拽** = 设置 `video.currentTime`（逐帧精确）
@@ -31,8 +31,8 @@
 - **弹幕 / 点赞 / 投币 / 收藏** = 点击播放器里对应按钮
 - **标题 / UP主 / 封面** = 按 `bvid` 调哔哩哔哩 `view` 接口获取（稳定、含封面）
 
-> 插件本身只是一个 WebSocket 客户端（和姊妹项目 NeteasePlugin 一样的结构）；真正干活的是
-> `macos-bridge/`。两者解耦，便于调试与常驻。
+> 插件**不修改 FlexDesigner 任何东西**——它只是后端 Node 进程在用 `child_process`（拉起 App）
+> 和 `ws`（连 App 的调试端口）做事，这是 SDK 对后端的标准定位。被驱动的是哔哩哔哩，不是 FlexDesigner。
 
 ## 功能
 
@@ -50,15 +50,15 @@
 
 ## 环境要求
 
-- macOS 11+（已在 Apple Silicon / macOS 实测）
+- macOS 11+（已在 Apple Silicon 实测）
 - 已安装哔哩哔哩 Mac 客户端 `/Applications/哔哩哔哩.app`
-- Node.js（见下方 ⚠️ 版本说明）
+- Node.js 18+
 - FlexDesigner 1.0+ 与一台 FlexBar
 
-> ⚠️ **Node 版本**：`flexcli`（FlexDesigner 的命令行）目前使用了 `import ... assert { type: 'json' }`
-> 旧语法，**在 Node 23+ 会报 `Unexpected identifier 'assert'`**。运行 `flexcli` / `npm run dev`
-> 等命令请切到 **Node 20 LTS**（推荐用 nvm：`nvm install 20 && nvm use 20`）。
-> 桥接服务 `macos-bridge` 与构建本身在新版 Node 上正常。
+> ⚠️ **Node 版本（仅影响热重载开发）**：`flexcli`（`npm run dev` 用到）目前用了旧的
+> `import ... assert { type: 'json' }` 语法，**在 Node 23+ 会报错**。要用 `npm run dev` 请切到
+> **Node 20 LTS**。而**安装(`plugin:copy`)、构建、插件运行本身在任意 Node 18+ 上都正常**——
+> 见下方一键安装。
 
 ## 一键安装（新设备）⭐
 
@@ -70,33 +70,23 @@ cd bilibili-flexbar-plugin
 bash scripts/setup.sh        # 装依赖 + 构建 + 安装进 FlexDesigner
 ```
 
-脚本跑完按提示三步：① **重启 FlexDesigner**，把按键从 Key Library 拖到 FlexBar；
-② 启动桥接 `npm run macos:bridge`（或装开机自启）；③ 播放视频即可。
+跑完只剩两步：① **重启 FlexDesigner**，把按键从 Key Library 拖到 FlexBar；
+② 打开哔哩哔哩播放视频——插件会**自动以调试端口拉起它**并接管控制。
 
-> 这条路用仓库自带的 `plugin:copy`（直接把插件拷进 FlexDesigner 数据目录），**任意 Node 版本都行**，
-> 不碰 `flexcli`，所以不受上面 Node 23+ 限制。想自己分步装见下。
+> 若哔哩哔哩**已在运行但没开调试端口**，到插件配置页点一次「调试模式重启」即可。
 
 ## 开发 / 手动安装
 
 ```bash
 npm install
-npm run build                # 构建插件后端（图标已内置，无需 gen:icon）
+npm run build                # 构建插件后端
 npm run plugin:copy          # 安装进 FlexDesigner（任意 Node 版本）
-npm run macos:bridge         # 启动桥接，看到 “WebSocket 服务已启动…” 即就绪
 
-# 想要热重载开发（改 src 自动重装）——需 Node 20（flexcli 限制）
+# 想要改 src 自动重装的热重载开发——需 Node 20（flexcli 限制）
 nvm use 20 && npm run dev
 ```
 
 改完代码重装：`npm run build && npm run plugin:copy`，再重启 FlexDesigner。
-然后在哔哩哔哩里播放任意视频，把插件按键拖到 FlexBar 上即可使用。
-
-### 让桥接服务常驻 / 开机自启
-
-```bash
-bash macos-bridge/install-launchagent.sh     # 登录自动启动、崩溃自动重启
-bash macos-bridge/uninstall-launchagent.sh   # 撤销
-```
 
 ## 按键说明
 
@@ -110,63 +100,73 @@ bash macos-bridge/uninstall-launchagent.sh   # 撤销
 | 进度旋钮 | **wheel** | 旋转微调进度（每格约 2 秒）|
 | 音量旋钮 | **wheel** | 旋转调节**视频内**音量（非系统音量）|
 | 弹幕 | **multiState** | 显示 / 隐藏弹幕，开启时高亮 |
-| 点赞 | **multiState** | 点赞/取消，已赞时高亮（粉色）|
-| 投币 | **multiState** | 投币，已投时高亮；视 B 站设置可能弹确认框 |
-| 收藏 | **multiState** | 收藏，已收藏时高亮；点击打开收藏夹选择 |
+| 点赞 / 投币 / 收藏 | **multiState** | 对应操作，已生效时粉色高亮 |
 
-> 点赞/投币/收藏 通过点击播放器里对应按钮实现（和「下一集」同理）。点赞可直接切换;
-> 投币、收藏会按 B 站客户端的设置走——在 B 站里开启「投币后不再询问」即可一键投币。
+> 点赞可直接切换；投币、收藏会按哔哩哔哩客户端的设置走——在 B 站里开启「投币后不再询问」即可一键投币。
 
 ## 配置页（FlexDesigner 内）
 
-三步向导：
-1. **启动桥接服务** —— 复制 `npm run macos:bridge` 去终端运行（或装 launchagent）。
-2. **以调试模式运行哔哩哔哩** —— 一键退出并带调试端口重启它。
-3. **测试连接** —— 播放任意视频后点测试。
+两步向导：
+1. **以调试模式运行哔哩哔哩** —— 一键退出并带调试端口重启它（应对「已运行但没开端口」）。
+2. **测试连接** —— 播放任意视频后点测试。
 
 ## 常见问题
 
-- **连不上 / 一直“未在播放”**
-  - 确认 `macos-bridge` 在运行（`npm run macos:bridge`）。
+- **一直「未在播放」/ 控制无效**
   - 确认哔哩哔哩以调试端口启动：`curl http://127.0.0.1:9222/json/version` 应有返回；
-    否则在配置页点「一键重启哔哩哔哩（调试模式）」，或先**完全退出**哔哩哔哩再运行 `start.sh`。
-  - 进度/状态来自正在播放的 `<video>`，请确保确实在播放视频页面。
-- **`flexcli` 报 `Unexpected identifier 'assert'`** —— Node 版本太新，切到 Node 20（见上）。
+    否则到配置页点「调试模式重启」，或先**完全退出**哔哩哔哩让插件自动以调试端口拉起它。
+  - 状态来自正在播放的 `<video>`，请确保确实在播放视频页面。
+- **`flexcli` 报 `Unexpected identifier 'assert'`** —— 仅 `npm run dev` 受影响，切到 Node 20；
+  安装用 `npm run plugin:copy` 不受限。
 - **下一集没反应** —— 单P视频本就没有「下一P」；多P/分集视频可用。
-- **封面不显示** —— 偶发接口/网络问题；其余功能不受影响，会回退为粉色占位封面。
+- **音量旋钮太灵敏 / 太迟钝** —— 改 `src/plugin.js` 里的 `VOL_STEP`（越小越不灵敏）。
 
-## 环境变量（桥接服务）
+## 高级（插件后端环境变量）
+
+插件后端按需读取以下环境变量（默认值通常即可）：
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `BILIBILI_WS_PORT` | `35020` | 插件连接端口（需与插件一致）|
 | `BILIBILI_CDP_PORT` | `9222` | 哔哩哔哩远程调试端口 |
 | `BILIBILI_APP` | `哔哩哔哩` | App 名称（用于启动）|
 | `BILIBILI_POLL_MS` | `300` | 状态轮询间隔（毫秒）|
 | `BILIBILI_NO_AUTOLAUNCH` | 未设置 | 设为任意值则不自动启动 App |
-| `DEBUG` | 未设置 | 打印调试日志 |
 
 ## 目录结构
 
 ```
-bilibili/
-├── src/                         # 插件后端源码（rollup 打包）
-│   ├── plugin.js                #   WS 客户端 + 按键逻辑（slider/wheel/multiState）
+bilibili-flexbar-plugin/
+├── src/                         # 插件后端源码（rollup 打包成 backend/plugin.cjs）
+│   ├── plugin.js                #   按键逻辑 + CDP 轮询/控制（自包含）
+│   ├── cdp.js                   #   极简 CDP 客户端
+│   ├── bilibili.js              #   页面表达式 + 按 bvid 拉元数据
 │   └── canvas-renderer.js       #   正在播放卡片绘制
 ├── com.h0ypothesis.bilibili.plugin/
 │   ├── manifest.json            #   按键定义 / i18n / 主题
 │   ├── config.json
-│   ├── resources/Bilibili.png   #   图标（由 scripts/gen-icon.js 生成）
+│   ├── resources/Bilibili.png   #   图标（scripts/gen-icon.js 生成）
 │   ├── ui/configPage.vue        #   配置向导
-│   ├── ui/nowplaying.vue        #   正在播放按键配置
-│   └── backend/plugin.cjs       #   构建产物
-├── macos-bridge/                # CDP 桥接服务（见其 README）
-├── scripts/gen-icon.js          # 生成图标并写入 manifest
+│   └── ui/nowplaying.vue        #   正在播放按键配置
+├── scripts/
+│   ├── setup.sh                 #   一键安装
+│   ├── install-local.js         #   flexcli-free 安装（plugin:copy）
+│   └── gen-icon.js              #   生成图标并写入 manifest
+├── .github/workflows/release.yaml  # 打 v* tag 自动产出 .flexplugin
 ├── rollup.config.mjs
 └── package.json
 ```
 
+## 发布到 FlexGate（官方插件库）
+
+本仓库结构符合官方要求（GitHub 托管、`com.<author>.<name>` 标识、manifest 通过官方 Schema、
+插件文件夹在根目录、`repo` 字段已填）。发布两条路：
+
+1. **GitHub Release**：打一个与 `manifest.json` `version` 对应的 tag（如 `v1.0.0`），CI 会自动
+   构建并把 `com.h0ypothesis.bilibili.flexplugin` 挂到 Release，供导入。
+2. **FlexGate**：在 FlexGate 个人主页填入本仓库 URL + 截图 + 分类，校验通过即可被一键安装。
+
 ## 致谢
 
-- 结构参考姊妹项目 NeteasePlugin / [ENIAC-Tech/NeteasePlugin](https://github.com/ENIAC-Tech/NeteasePlugin)
+- 结构参考姊妹项目 [ENIAC-Tech/NeteasePlugin](https://github.com/ENIAC-Tech/NeteasePlugin)、
+  [ENIAC-Tech/Plugin-Example](https://github.com/ENIAC-Tech/Plugin-Example)
 - FlexDesigner SDK — ENIAC
