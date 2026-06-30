@@ -466,9 +466,9 @@ plugin.on('ui.message', async (payload) => {
 
 // 退出哔哩哔哩并以调试端口重启（修复「已运行但没开调试端口」的情况）
 function restartBilibiliDebug() {
-    const cmd = `osascript -e 'tell application "${APP_NAME}" to quit' >/dev/null 2>&1; sleep 1; ` +
-        `pkill -f "${APP_NAME}.app" >/dev/null 2>&1; sleep 1; ` +
-        `open -a "${APP_NAME}" --args --remote-debugging-port=${CDP_PORT} --remote-allow-origins='*'`;
+    // 与用户实测可用的手动命令完全一致：优雅退出 → 等 2 秒 → 带调试端口启动。
+    // 不用 pkill（会在退出途中强杀，导致新实例「跳两下又崩」），也不加 --remote-allow-origins。
+    const cmd = `osascript -e 'quit app "${APP_NAME}"' >/dev/null 2>&1; sleep 2; open -a "${APP_NAME}" --args --remote-debugging-port=${CDP_PORT}`;
     return new Promise((resolve) => {
         exec(cmd, (error) => {
             if (error) { logger.error(`[Plugin] 重启哔哩哔哩失败: ${error.message}`); resolve({ success: false, error: error.message }); }
