@@ -1,7 +1,7 @@
 name: Pack and release plugin
 
 # 打 tag（如 v1.0.0，需与 manifest.json 的 version 对应）时自动构建并把
-# .flexplugin 附到 Release 资产里，供用户/FlexGate 一键导入。
+# .flexplugin 附到 Release 资产里，供导入安装。
 on:
   push:
     tags:
