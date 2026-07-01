@@ -13,33 +13,17 @@
 
 <p align="center"><sub>正在播放 · 字幕 · 播放/暂停 · 下一集 · 进度条 · 弹幕 · 点赞 · 投币 · 收藏 · 音量 · 全屏</sub></p>
 
-## 工作原理
+## 可选：让「点 Dock 图标」也带调试端口
 
-哔哩哔哩 Mac 客户端（`/Applications/哔哩哔哩.app`，bundle `com.bilibili.bilibiliPC`）是一个
-**Electron 应用**。用 `--remote-debugging-port` 启动后，它会暴露 Chrome DevTools Protocol(CDP)，
-其中 `player.html` 页面承载真正的 `<video>` 元素。
+macOS 从 Dock / 访达启动 App **不传命令行参数**，所以原生哔哩哔哩图标无法带调试端口。
+生成一个小启动器（套用 B 站图标、Dock 名显示「哔哩哔哩」）放到 Dock 里代替它即可——点它就带端口启动哔哩哔哩，**完全不改哔哩哔哩本体**（更新也不受影响）：
 
-本插件是**自包含**的：插件后端（FlexDesigner 的 Node 子进程）**直接**通过 CDP 读取并驱动
-该 `<video>`，**不需要任何独立的后台服务**。
-
-```
-FlexBar 插件后端 (backend/plugin.cjs，跑在 FlexDesigner 里)
-     │  CDP：读取/驱动 player.html 里的 <video>
-     ▼
-哔哩哔哩.app (Electron, --remote-debugging-port=9222)
+```bash
+bash scripts/make-bilibili-debug-launcher.sh    # 默认生成到「应用程序」(/Applications/哔哩哔哩 调试.app)
 ```
 
-- **进度条拖拽** = 设置 `video.currentTime`（逐帧精确）
-- **播放 / 暂停** = `video.play()` / `video.pause()`（读真实状态）
-- **下一集** = 点击播放器「下一P」按钮
-- **快进 / 快退** = `video.currentTime ± 15s`
-- **音量** = 设置 `video.volume`（播放器内音量，非系统音量）
-- **弹幕 / 点赞 / 投币 / 收藏 / 全屏** = 点击播放器里对应按钮（全屏用 `userGesture` 模拟手势，满足全屏 API）
-- **字幕** = 读播放器字幕层 DOM 的当前行（主 `major-group` / 副 `minor-group`），双语时同时显示主+副
-- **标题 / UP主 / 封面** = 按 `bvid` 调哔哩哔哩 `view` 接口获取（稳定、含封面）
-
-> 插件**不修改 FlexDesigner 任何东西**——它只是后端 Node 进程在用 `child_process`（拉起 App）
-> 和 `ws`（连 App 的调试端口）做事，这是 SDK 对后端的标准定位。被驱动的是哔哩哔哩，不是 FlexDesigner。
+在「应用程序」里找到它，首次右键 →「打开」一次，然后拖到 Dock。它会智能处理三种情况：**已带端口在跑** → 切前台；
+**在跑但没端口** → 退掉再带端口重开；**没在跑** → 带端口启动。（换端口设 `BILIBILI_CDP_PORT` 重新生成。）
 
 ## 功能
 
@@ -83,18 +67,6 @@ bash scripts/setup.sh        # 装依赖 + 构建 + 安装进 FlexDesigner
 ② 打开哔哩哔哩播放视频——插件会**自动以调试端口拉起它**并接管控制。
 
 > 若哔哩哔哩**已在运行但没开调试端口**，到插件配置页点一次「调试模式重启」即可。
-
-## 可选：让「点 Dock 图标」也带调试端口
-
-macOS 从 Dock / 访达启动 App **不传命令行参数**，所以原生哔哩哔哩图标无法带调试端口。
-生成一个小启动器（套用 B 站图标、Dock 名显示「哔哩哔哩」）放到 Dock 里代替它即可——点它就带端口启动哔哩哔哩，**完全不改哔哩哔哩本体**（更新也不受影响）：
-
-```bash
-bash scripts/make-bilibili-debug-launcher.sh    # 默认生成到「应用程序」(/Applications/哔哩哔哩 调试.app)
-```
-
-在「应用程序」里找到它，首次右键 →「打开」一次，然后拖到 Dock。它会智能处理三种情况：**已带端口在跑** → 切前台；
-**在跑但没端口** → 退掉再带端口重开；**没在跑** → 带端口启动。（换端口设 `BILIBILI_CDP_PORT` 重新生成。）
 
 ## 开发 / 手动安装
 
@@ -156,6 +128,34 @@ nvm use 20 && npm run dev
 | `BILIBILI_APP` | `哔哩哔哩` | App 名称（用于启动）|
 | `BILIBILI_POLL_MS` | `300` | 状态轮询间隔（毫秒）|
 | `BILIBILI_NO_AUTOLAUNCH` | 未设置 | 设为任意值则不自动启动 App |
+
+## 工作原理
+
+哔哩哔哩 Mac 客户端（`/Applications/哔哩哔哩.app`，bundle `com.bilibili.bilibiliPC`）是一个
+**Electron 应用**。用 `--remote-debugging-port` 启动后，它会暴露 Chrome DevTools Protocol(CDP)，
+其中 `player.html` 页面承载真正的 `<video>` 元素。
+
+本插件是**自包含**的：插件后端（FlexDesigner 的 Node 子进程）**直接**通过 CDP 读取并驱动
+该 `<video>`，**不需要任何独立的后台服务**。
+
+```
+FlexBar 插件后端 (backend/plugin.cjs，跑在 FlexDesigner 里)
+     │  CDP：读取/驱动 player.html 里的 <video>
+     ▼
+哔哩哔哩.app (Electron, --remote-debugging-port=9222)
+```
+
+- **进度条拖拽** = 设置 `video.currentTime`（逐帧精确）
+- **播放 / 暂停** = `video.play()` / `video.pause()`（读真实状态）
+- **下一集** = 点击播放器「下一P」按钮
+- **快进 / 快退** = `video.currentTime ± 15s`
+- **音量** = 设置 `video.volume`（播放器内音量，非系统音量）
+- **弹幕 / 点赞 / 投币 / 收藏 / 全屏** = 点击播放器里对应按钮（全屏用 `userGesture` 模拟手势，满足全屏 API）
+- **字幕** = 读播放器字幕层 DOM 的当前行（主 / 副字幕按 `data-type` 区分），双语时同时显示主+副
+- **标题 / UP主 / 封面** = 按 `bvid` 调哔哩哔哩 `view` 接口获取（稳定、含封面）
+
+> 插件**不修改 FlexDesigner 任何东西**——它只是后端 Node 进程在用 `child_process`（拉起 App）
+> 和 `ws`（连 App 的调试端口）做事，这是 SDK 对后端的标准定位。被驱动的是哔哩哔哩，不是 FlexDesigner。
 
 ## 目录结构
 
