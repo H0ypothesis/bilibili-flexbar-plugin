@@ -39,6 +39,26 @@ const STATE_EXPR = `(function(){
       muted: !!v.muted,
       danmaku: (function(){ var i=document.querySelector('.bui-danmaku-switch-input,.bpx-player-dm-switch-input'); return i ? !!i.checked : null; })(),
       fullscreen: !!document.fullscreenElement,
+      subtitle: (function(){
+        try {
+          function grp(sel){ var g=document.querySelector(sel); if(!g) return ''; var t=g.querySelectorAll('.bili-subtitle-x-subtitle-panel-text'); return t.length ? Array.prototype.map.call(t,function(e){return (e.textContent||'').trim();}).filter(Boolean).join(' ') : ''; }
+          var main = grp('.bili-subtitle-x-subtitle-panel-major-group');   // 主字幕
+          if (main) return main;
+          // 兜底（老结构/无分组）：取所有字幕文本
+          var els = document.querySelectorAll('.bili-subtitle-x-subtitle-panel-text');
+          if (els.length) return Array.prototype.map.call(els, function(e){ return (e.textContent||'').trim(); }).filter(Boolean).join(' ');
+          var w = document.querySelector('.bpx-player-subtitle-wrap');
+          return w ? (w.textContent||'').trim() : '';
+        } catch(e){ return ''; }
+      })(),
+      subtitleSub: (function(){
+        try {
+          var g = document.querySelector('.bili-subtitle-x-subtitle-panel-minor-group');   // 副字幕（双语时才有）
+          if (!g) return '';
+          var t = g.querySelectorAll('.bili-subtitle-x-subtitle-panel-text');
+          return t.length ? Array.prototype.map.call(t, function(e){ return (e.textContent||'').trim(); }).filter(Boolean).join(' ') : '';
+        } catch(e){ return ''; }
+      })(),
       social: (function(){
         function g(t){
           var e=document.querySelector('[title*="'+t+'"]');

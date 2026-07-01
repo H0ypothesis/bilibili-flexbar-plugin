@@ -236,6 +236,100 @@ class CanvasRenderer {
         return canvas.toBuffer('image/png');
     }
 
+    /**
+     * 渲染字幕键。主字幕(main)用粉色、较大；副字幕(sub)用白色、较小。
+     * - 双语(main+sub)：主粉色在上、副白色在下，各自单行自适应缩放（超长省略）。
+     * - 单语(仅 main)：粉色，单行放不下则折两行。
+     * - 皆空：暗色「字幕」占位。
+     */
+    async renderSubtitle(main, sub, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT) {
+        this.ensureFonts();
+        const canvas = createCanvas(width, height);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = COLORS.background;
+        ctx.fillRect(0, 0, width, height);
+
+        const pad = 14;
+        const maxWidth = width - pad * 2;
+        const cx = width / 2, cy = height / 2;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const m = (main || '').trim();
+        const s = (sub || '').trim();
+
+        if (!m && !s) {
+            ctx.fillStyle = COLORS.secondary;
+            ctx.font = `${Math.floor(height * 0.3)}px ${FONT_FAMILY}`;
+            ctx.fillText('字幕', cx, cy);
+            ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+            return canvas.toBuffer('image/png');
+        }
+
+        // 单行自适应：字号从 startFont 往下缩到放得下；到 minFont 仍超则截断加省略号。
+        const fitOneLine = (text, startFont, minFont, weight) => {
+            let f = startFont, out = text;
+            for (; f >= minFont; f--) {
+                ctx.font = `${weight} ${f}px ${FONT_FAMILY}`;
+                if (ctx.measureText(text).width <= maxWidth) break;
+            }
+            if (f < minFont) { f = minFont; ctx.font = `${weight} ${f}px ${FONT_FAMILY}`; out = this.truncateText(ctx, text, maxWidth); }
+            return { font: f, text: out };
+        };
+
+        if (m && s) {
+            // 双语：主(粉,大)在上，副(白,小)在下
+            const mainFit = fitOneLine(m, Math.floor(height * 0.40), 15, 'bold');    // ≈24 @60
+            const subFit  = fitOneLine(s, Math.floor(height * 0.27), 12, 'normal');  // ≈16 @60
+            const gap = 4;
+            const totalH = mainFit.font + gap + subFit.font;
+            const top = (height - totalH) / 2;
+            ctx.fillStyle = COLORS.accent;                 // 主字幕：哔哩哔哩粉
+            ctx.font = `bold ${mainFit.font}px ${FONT_FAMILY}`;
+            ctx.fillText(mainFit.text, cx, top + mainFit.font / 2);
+            ctx.fillStyle = COLORS.primary;                // 副字幕：白
+            ctx.font = `normal ${subFit.font}px ${FONT_FAMILY}`;
+            ctx.fillText(subFit.text, cx, top + mainFit.font + gap + subFit.font / 2);
+        } else {
+            // 单语（仅主字幕）：粉色；单行放不下折两行
+            const t = m || s;
+            ctx.fillStyle = COLORS.accent;
+            const maxFont = Math.floor(height * 0.46), minFont = 15;
+            let font = maxFont;
+            for (; font >= minFont; font--) { ctx.font = `bold ${font}px ${FONT_FAMILY}`; if (ctx.measureText(t).width <= maxWidth) break; }
+            if (font >= minFont) {
+                ctx.font = `bold ${font}px ${FONT_FAMILY}`;
+                ctx.fillText(t, cx, cy);
+            } else {
+                font = Math.floor(height * 0.3);
+                ctx.font = `bold ${font}px ${FONT_FAMILY}`;
+                const lines = this.wrapTwoLines(ctx, t, maxWidth);
+                const lineH = font * 1.15;
+                const startY = cy - (lineH * (lines.length - 1)) / 2;
+                lines.forEach((ln, i) => ctx.fillText(ln, cx, startY + i * lineH));
+            }
+        }
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        return canvas.toBuffer('image/png');
+    }
+
+    // 按宽度把文本折成最多两行（CJK 无空格，按字符累积；第二行超长加省略号）
+    wrapTwoLines(ctx, text, maxWidth) {
+        let line1 = '', i = 0;
+        for (; i < text.length; i++) {
+            if (ctx.measureText(line1 + text[i]).width > maxWidth && line1) break;
+            line1 += text[i];
+        }
+        let line2 = text.slice(i);
+        if (!line2) return [line1];
+        if (ctx.measureText(line2).width > maxWidth) {
+            while (line2.length && ctx.measureText(line2 + '…').width > maxWidth) line2 = line2.slice(0, -1);
+            line2 += '…';
+        }
+        return [line1, line2];
+    }
+
     renderIdleState(canvas, ctx, width, height) {
         const cx = width / 2, cy = height / 2;
         ctx.fillStyle = COLORS.accent;
