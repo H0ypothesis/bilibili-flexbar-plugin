@@ -8,10 +8,14 @@
 </p>
 
 <p align="center">
-  <img src="docs/flexbar.png" alt="哔哩哔哩插件在 FlexBar 上的按键布局" width="100%" />
+  <img src="docs/flexbar.png" alt="哔哩哔哩插件在 FlexBar 上的按键布局（一）" width="100%" />
 </p>
 
-<p align="center"><sub>正在播放 · 字幕 · 播放/暂停 · 下一集 · 进度条 · 弹幕 · 点赞 · 投币 · 收藏 · 音量 · 全屏</sub></p>
+<p align="center">
+  <img src="docs/flexbar2.png" alt="哔哩哔哩插件在 FlexBar 上的按键布局（二）" width="100%" />
+</p>
+
+<p align="center"><sub>正在播放 · 字幕 · 自动字幕 · 播放/暂停 · 下一集 · 进度条 · 弹幕 · 点赞 · 投币 · 收藏 · 音量 · 全屏</sub></p>
 
 ## 可选：让「点 Dock 图标」也带调试端口
 
