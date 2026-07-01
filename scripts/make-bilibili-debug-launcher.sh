@@ -14,7 +14,8 @@ set -euo pipefail
 APP_NAME="${BILIBILI_APP:-哔哩哔哩}"
 PORT="${BILIBILI_CDP_PORT:-9222}"
 SRC_APP="/Applications/${APP_NAME}.app"
-OUT_DIR="${1:-$HOME/Applications}"
+# 默认装到「应用程序」(/Applications)——可写时;否则退回 ~/Applications。也可用第 1 个参数指定目录。
+if [ -n "${1:-}" ]; then OUT_DIR="$1"; elif [ -w /Applications ]; then OUT_DIR="/Applications"; else OUT_DIR="$HOME/Applications"; fi
 LAUNCHER="$OUT_DIR/${APP_NAME} 调试.app"
 
 echo "▶ 生成「${APP_NAME} 调试」启动器"

@@ -90,10 +90,10 @@ macOS 从 Dock / 访达启动 App **不传命令行参数**，所以原生哔哩
 生成一个小启动器（套用 B 站图标、Dock 名显示「哔哩哔哩」）放到 Dock 里代替它即可——点它就带端口启动哔哩哔哩，**完全不改哔哩哔哩本体**（更新也不受影响）：
 
 ```bash
-bash scripts/make-bilibili-debug-launcher.sh    # 生成到 ~/Applications/哔哩哔哩 调试.app
+bash scripts/make-bilibili-debug-launcher.sh    # 默认生成到「应用程序」(/Applications/哔哩哔哩 调试.app)
 ```
 
-首次在访达里右键 →「打开」一次，然后拖到 Dock。它会智能处理三种情况：**已带端口在跑** → 切前台；
+在「应用程序」里找到它，首次右键 →「打开」一次，然后拖到 Dock。它会智能处理三种情况：**已带端口在跑** → 切前台；
 **在跑但没端口** → 退掉再带端口重开；**没在跑** → 带端口启动。（换端口设 `BILIBILI_CDP_PORT` 重新生成。）
 
 ## 开发 / 手动安装
