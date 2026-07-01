@@ -40,23 +40,23 @@ const STATE_EXPR = `(function(){
       danmaku: (function(){ var i=document.querySelector('.bui-danmaku-switch-input,.bpx-player-dm-switch-input'); return i ? !!i.checked : null; })(),
       fullscreen: !!document.fullscreenElement,
       subtitle: (function(){
+        // 主字幕 = data-type "0"。B 站字幕结构随视频而变（主字幕不一定在 major-group），
+        // 用 data-type 判定最可靠；无 data-type 标记时（单语/老结构）才把全部文本当主字幕。
         try {
-          function grp(sel){ var g=document.querySelector(sel); if(!g) return ''; var t=g.querySelectorAll('.bili-subtitle-x-subtitle-panel-text'); return t.length ? Array.prototype.map.call(t,function(e){return (e.textContent||'').trim();}).filter(Boolean).join(' ') : ''; }
-          var main = grp('.bili-subtitle-x-subtitle-panel-major-group');   // 主字幕
-          if (main) return main;
-          // 兜底（老结构/无分组）：取所有字幕文本
-          var els = document.querySelectorAll('.bili-subtitle-x-subtitle-panel-text');
-          if (els.length) return Array.prototype.map.call(els, function(e){ return (e.textContent||'').trim(); }).filter(Boolean).join(' ');
+          var spans = [].slice.call(document.querySelectorAll('.bili-subtitle-x-subtitle-panel-text'));
+          function join(a){ return a.map(function(e){ return (e.textContent||'').trim(); }).filter(Boolean).join(' '); }
+          var typed = spans.filter(function(e){ return e.getAttribute('data-type') != null; });
+          if (typed.length) return join(typed.filter(function(e){ return e.getAttribute('data-type') === '0'; }));
+          if (spans.length) return join(spans);
           var w = document.querySelector('.bpx-player-subtitle-wrap');
           return w ? (w.textContent||'').trim() : '';
         } catch(e){ return ''; }
       })(),
       subtitleSub: (function(){
+        // 副字幕 = data-type "1"（双语时才有）。
         try {
-          var g = document.querySelector('.bili-subtitle-x-subtitle-panel-minor-group');   // 副字幕（双语时才有）
-          if (!g) return '';
-          var t = g.querySelectorAll('.bili-subtitle-x-subtitle-panel-text');
-          return t.length ? Array.prototype.map.call(t, function(e){ return (e.textContent||'').trim(); }).filter(Boolean).join(' ') : '';
+          var spans = [].slice.call(document.querySelectorAll('.bili-subtitle-x-subtitle-panel-text'));
+          return spans.filter(function(e){ return e.getAttribute('data-type') === '1'; }).map(function(e){ return (e.textContent||'').trim(); }).filter(Boolean).join(' ');
         } catch(e){ return ''; }
       })(),
       social: (function(){
