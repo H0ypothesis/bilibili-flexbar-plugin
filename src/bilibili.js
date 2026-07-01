@@ -105,6 +105,17 @@ function cmdExpr(kind, arg) {
             return `(function(){var i=document.querySelector('.bui-danmaku-switch-input,.bpx-player-dm-switch-input'); if(i){i.click(); return !!i.checked;} return null;})()`;
         case 'fullscreen':   // 全屏 打开/关闭 切换（点击播放器全屏按钮，需 userGesture）
             return `(function(){var b=document.querySelector('.bpx-player-ctrl-full,[aria-label="全屏"],[aria-label="退出全屏"]'); if(b){b.click(); return null;} return null;})()`;
+        case 'subtitleOn':   // 开启字幕（点原文第一条轨道，单语；已开则不动；无轨道回 'no-tracks' 供重试）
+            return `(function(){
+                var all=document.querySelectorAll('.bpx-player-ctrl-subtitle-language-item');
+                if(!all.length) return 'no-tracks';
+                var active=Array.prototype.some.call(all,function(e){return (' '+e.className+' ').indexOf(' bpx-state-active ')>=0;});
+                if(active) return 'already-on';
+                var origin=document.querySelector('.bpx-player-ctrl-subtitle-menu-origin');
+                var items=(origin||document).querySelectorAll('.bpx-player-ctrl-subtitle-language-item');
+                if(items.length){ items[0].click(); return 'enabled'; }
+                all[0].click(); return 'enabled';
+            })()`;
         case 'like':        // 点赞（再次点击取消）
             return `(function(){var b=document.querySelector('[title*="点赞"]'); if(b){b.click(); return true;} return false;})()`;
         case 'coin':        // 投币（按 B 站设置，可能弹确认框；开启「不再询问」即一键投币）

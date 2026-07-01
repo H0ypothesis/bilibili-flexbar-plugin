@@ -1,7 +1,7 @@
 {
     "name": "BilibiliPlugin",
     "uuid": "com.h0ypothesis.bilibili",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "author": "H0ypothesis",
     "entry": "backend/plugin.cjs",
     "description": "哔哩哔哩控制面板 - 通过 Electron 调试协议驱动 Mac 客户端播放器（进度拖拽/播放暂停/下一集/音量/弹幕/点赞投币收藏）",
@@ -282,6 +282,24 @@
                     "flags": ["disable-bg", "disable-fg", "disable-icon-sel", "disable-layout-sel"]
                 },
                 "data": {}
+            },
+            {
+                "title": "$AutoSubtitle.Title",
+                "tip": "$AutoSubtitle.Tip",
+                "cid": "com.h0ypothesis.bilibili.autosubtitle",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-closed-caption-outline",
+                    "width": 120,
+                    "multiStyle": [
+                        { "icon": "mdi mdi-closed-caption-outline", "fgColor": "#9499A0" },
+                        { "icon": "mdi mdi-closed-caption", "fgColor": "#FB7299" }
+                    ]
+                },
+                "data": {}
             }
         ]
     },
@@ -341,7 +359,8 @@
             "Coin": { "Title": "Coin", "Tip": "Give a coin — may open a confirm dialog unless you turned that off in Bilibili" },
             "Favorite": { "Title": "Favorite", "Tip": "Add to favorites — opens the folder picker" },
             "Fullscreen": { "Title": "Fullscreen", "Tip": "Toggle fullscreen (highlighted when on)" },
-            "Subtitle": { "Title": "Subtitle", "Tip": "Show the current subtitle line (when the video has subtitles turned on)" }
+            "Subtitle": { "Title": "Subtitle", "Tip": "Show the current subtitle line (when the video has subtitles turned on)" },
+            "AutoSubtitle": { "Title": "Auto Subtitle", "Tip": "When on, subtitles are auto-enabled on each new video (original language). Persists across restarts." }
         },
         "zh-CN": {
             "PluginName": "哔哩哔哩",
@@ -398,7 +417,8 @@
             "Coin": { "Title": "投币", "Tip": "投币 —— 若未在 B 站关闭确认，会弹出确认框" },
             "Favorite": { "Title": "收藏", "Tip": "收藏 —— 打开收藏夹选择" },
             "Fullscreen": { "Title": "全屏", "Tip": "打开 / 关闭全屏（全屏时高亮）" },
-            "Subtitle": { "Title": "字幕", "Tip": "显示当前字幕（需视频已开启字幕）" }
+            "Subtitle": { "Title": "字幕", "Tip": "显示当前字幕（需视频已开启字幕）" },
+            "AutoSubtitle": { "Title": "自动字幕", "Tip": "开启后，进入新视频自动打开字幕（原文单语）；重启也记得该设置" }
         },
         "ja": {
             "PluginName": "ビリビリ",
@@ -455,7 +475,8 @@
             "Coin": { "Title": "コイン", "Tip": "コインを投げる —— Bilibili設定次第で確認ダイアログが出ます" },
             "Favorite": { "Title": "お気に入り", "Tip": "お気に入り —— フォルダ選択が開きます" },
             "Fullscreen": { "Title": "フルスクリーン", "Tip": "フルスクリーン切り替え（オン時ハイライト）" },
-            "Subtitle": { "Title": "字幕", "Tip": "現在の字幕を表示（動画で字幕オン時）" }
+            "Subtitle": { "Title": "字幕", "Tip": "現在の字幕を表示（動画で字幕オン時）" },
+            "AutoSubtitle": { "Title": "字幕自動", "Tip": "オンにすると新しい動画で字幕を自動表示（原語・単一）。再起動後も保持" }
         }
     }
 }
