@@ -1,7 +1,7 @@
 {
     "name": "BilibiliPlugin",
     "uuid": "com.h0ypothesis.bilibili",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "author": "H0ypothesis",
     "entry": "backend/plugin.cjs",
     "description": "哔哩哔哩控制面板 - 通过 Electron 调试协议驱动 Mac 客户端播放器（进度拖拽/播放暂停/下一集/音量/弹幕/点赞投币收藏）",
@@ -248,6 +248,24 @@
                     ]
                 },
                 "data": {}
+            },
+            {
+                "title": "$Fullscreen.Title",
+                "tip": "$Fullscreen.Tip",
+                "cid": "com.h0ypothesis.bilibili.fullscreen",
+                "config": {
+                    "keyType": "multiState",
+                    "platform": ["mac"]
+                },
+                "style": {
+                    "icon": "mdi mdi-fullscreen",
+                    "width": 120,
+                    "multiStyle": [
+                        { "icon": "mdi mdi-fullscreen", "fgColor": "#FFFFFF" },
+                        { "icon": "mdi mdi-fullscreen-exit", "fgColor": "#FB7299" }
+                    ]
+                },
+                "data": {}
             }
         ]
     },
@@ -305,7 +323,8 @@
             "SeekWheel": { "Title": "Seek Wheel", "Tip": "Rotate to fine-tune the position" },
             "Like": { "Title": "Like", "Tip": "Like the video (tap again to undo)" },
             "Coin": { "Title": "Coin", "Tip": "Give a coin — may open a confirm dialog unless you turned that off in Bilibili" },
-            "Favorite": { "Title": "Favorite", "Tip": "Add to favorites — opens the folder picker" }
+            "Favorite": { "Title": "Favorite", "Tip": "Add to favorites — opens the folder picker" },
+            "Fullscreen": { "Title": "Fullscreen", "Tip": "Toggle fullscreen (highlighted when on)" }
         },
         "zh-CN": {
             "PluginName": "哔哩哔哩",
@@ -360,7 +379,8 @@
             "SeekWheel": { "Title": "进度旋钮", "Tip": "旋转以微调进度" },
             "Like": { "Title": "点赞", "Tip": "给视频点赞（再按一次取消）" },
             "Coin": { "Title": "投币", "Tip": "投币 —— 若未在 B 站关闭确认，会弹出确认框" },
-            "Favorite": { "Title": "收藏", "Tip": "收藏 —— 打开收藏夹选择" }
+            "Favorite": { "Title": "收藏", "Tip": "收藏 —— 打开收藏夹选择" },
+            "Fullscreen": { "Title": "全屏", "Tip": "打开 / 关闭全屏（全屏时高亮）" }
         },
         "ja": {
             "PluginName": "ビリビリ",
@@ -415,7 +435,8 @@
             "SeekWheel": { "Title": "シークホイール", "Tip": "回して微調整" },
             "Like": { "Title": "いいね", "Tip": "いいね（もう一度で取り消し）" },
             "Coin": { "Title": "コイン", "Tip": "コインを投げる —— Bilibili設定次第で確認ダイアログが出ます" },
-            "Favorite": { "Title": "お気に入り", "Tip": "お気に入り —— フォルダ選択が開きます" }
+            "Favorite": { "Title": "お気に入り", "Tip": "お気に入り —— フォルダ選択が開きます" },
+            "Fullscreen": { "Title": "フルスクリーン", "Tip": "フルスクリーン切り替え（オン時ハイライト）" }
         }
     }
 }

@@ -41,6 +41,7 @@ const CID = {
     like: `${UUID}.like`,
     coin: `${UUID}.coin`,
     favorite: `${UUID}.favorite`,
+    fullscreen: `${UUID}.fullscreen`,
 };
 
 const CDP_HOST = process.env.BILIBILI_CDP_HOST || '127.0.0.1';
@@ -68,11 +69,11 @@ let currentState = {
     playState: 'Stopped',
     timeline: { currentTime: 0, totalTime: 0 },
     social: { liked: false, coined: false, collected: false, likeCount: '' },
-    extras: { volume: 1, muted: false, danmaku: null },
+    extras: { volume: 1, muted: false, danmaku: null, fullscreen: false },
 };
 
 // 从页面读到的原始状态 + 元数据 + 进度插值基准
-let live = { hasVideo: false, t: 0, dur: 0, paused: true, rate: 1, href: '', docTitle: '', up: null, social: null, vol: 1, muted: false, danmaku: null };
+let live = { hasVideo: false, t: 0, dur: 0, paused: true, rate: 1, href: '', docTitle: '', up: null, social: null, vol: 1, muted: false, danmaku: null, fullscreen: false };
 let meta = null, currentBvid = null, metaToken = 0;
 let baseT = 0, baseAt = Date.now();
 let cdpReady = false;
@@ -103,7 +104,7 @@ function deriveSocial() {
     return { liked: !!(s.like && s.like.on), coined: !!(s.coin && s.coin.on), collected: !!(s.fav && s.fav.on), likeCount: (s.like && s.like.n) || '' };
 }
 function deriveExtras() {
-    return { volume: typeof live.vol === 'number' ? live.vol : 1, muted: !!live.muted, danmaku: (live.danmaku == null) ? null : !!live.danmaku };
+    return { volume: typeof live.vol === 'number' ? live.vol : 1, muted: !!live.muted, danmaku: (live.danmaku == null) ? null : !!live.danmaku, fullscreen: !!live.fullscreen };
 }
 function interpolatedSec() {
     let pos = baseT;
@@ -144,7 +145,7 @@ function applyState() {
 async function onSnapshot(s) {
     if (!s || s.error) return;
     if (!s.hasVideo) {
-        live = { hasVideo: false, t: 0, dur: 0, paused: true, rate: 1, href: s.href || '', docTitle: '', up: null, social: null, vol: 1, muted: false, danmaku: null };
+        live = { hasVideo: false, t: 0, dur: 0, paused: true, rate: 1, href: s.href || '', docTitle: '', up: null, social: null, vol: 1, muted: false, danmaku: null, fullscreen: false };
         currentBvid = null; meta = null; baseT = 0; baseAt = Date.now();
         applyState();
         return;
@@ -154,6 +155,7 @@ async function onSnapshot(s) {
         t: Number(s.t) || 0, dur: Number(s.dur) || 0, paused: !!s.paused, rate: Number(s.rate) || 1,
         href: s.href || '', docTitle: s.docTitle || '', up: s.up || null, social: s.social || null,
         vol: typeof s.vol === 'number' ? s.vol : 1, muted: !!s.muted, danmaku: (s.danmaku == null) ? null : !!s.danmaku,
+        fullscreen: !!s.fullscreen,
     };
     baseT = live.t; baseAt = Date.now();
 
@@ -225,8 +227,8 @@ function startEngine() {
 }
 
 // 命令：直接在页面里执行表达式
-function cdpCmd(kind, arg) {
-    return cdp.evaluate(cmdExpr(kind, arg)).catch((e) => { logger.error(`[Plugin] 命令 ${kind} 失败: ${e.message}`); return undefined; });
+function cdpCmd(kind, arg, opts) {
+    return cdp.evaluate(cmdExpr(kind, arg), opts).catch((e) => { logger.error(`[Plugin] 命令 ${kind} 失败: ${e.message}`); return undefined; });
 }
 
 // ============================================================================
@@ -254,7 +256,7 @@ function updateSocialKeys() {
     forEachKey((serialNumber, key) => { if (key.cid === CID.like || key.cid === CID.coin || key.cid === CID.favorite) updateKey(serialNumber, key); });
 }
 function updateExtrasKeys() {
-    forEachKey((serialNumber, key) => { if (key.cid === CID.danmaku) updateKey(serialNumber, key); });
+    forEachKey((serialNumber, key) => { if (key.cid === CID.danmaku || key.cid === CID.fullscreen) updateKey(serialNumber, key); });
 }
 
 async function updateKey(serialNumber, key) {
@@ -267,6 +269,7 @@ async function updateKey(serialNumber, key) {
             case CID.coin: setMultiState(serialNumber, key, currentState.social.coined ? 1 : 0); break;
             case CID.favorite: setMultiState(serialNumber, key, currentState.social.collected ? 1 : 0); break;
             case CID.danmaku: setMultiState(serialNumber, key, currentState.extras.danmaku ? 1 : 0); break;
+            case CID.fullscreen: setMultiState(serialNumber, key, currentState.extras.fullscreen ? 1 : 0); break;
         }
     } catch (err) {
         logger.error(`[Plugin] 更新按键 ${key.cid} 失败: ${err.message}`);
@@ -355,6 +358,12 @@ function handleKeyData(serialNumber, data) {
             currentState.extras.danmaku = !currentState.extras.danmaku;   // 乐观翻转
             setMultiState(serialNumber, key, currentState.extras.danmaku ? 1 : 0);
             cdpCmd('danmaku');
+            break;
+        case CID.fullscreen:
+            haptic(serialNumber);
+            currentState.extras.fullscreen = !currentState.extras.fullscreen;   // 乐观翻转
+            setMultiState(serialNumber, key, currentState.extras.fullscreen ? 1 : 0);
+            cdpCmd('fullscreen', null, { userGesture: true });   // 全屏 API 需模拟用户手势
             break;
         case CID.like:
             haptic(serialNumber);

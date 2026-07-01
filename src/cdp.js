@@ -167,7 +167,7 @@ class CDPClient {
      * @param {string} expression
      * @returns {Promise<any>}
      */
-    async evaluate(expression) {
+    async evaluate(expression, opts = {}) {
         // 最多重连一次
         for (let attempt = 0; attempt < 2; attempt++) {
             try {
@@ -177,6 +177,7 @@ class CDPClient {
                     expression,
                     returnByValue: true,
                     awaitPromise: true,
+                    userGesture: !!opts.userGesture,   // 全屏等需要用户手势的 API 必须置 true
                     timeout: this.evalTimeoutMs,
                 });
                 if (res && res.exceptionDetails) {
